@@ -1,5 +1,5 @@
 {
-  "name": "Semesterräknare",
+  "name": "Semesterresan",
   "short_name": "Semester",
   "start_url": "./index.html",
   "scope": "./",
@@ -19,5 +19,11 @@
       "type": "image/png",
       "purpose": "any"
     }
+  ],
+  "id": "bjorkholmen",
+  "description": "Planera din resa på ett enkelt sätt",
+  "lang": "sv",
+  "categories": [
+    "travel"
   ]
 }
