@@ -9,13 +9,13 @@ JSON
   "theme_color": "#0284c7",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "https://raw.githubusercontent.com/google/material-design-icons/master/png/maps/flight/materialicons/192dp/2x/baseline_flight_black_192dp.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "https://raw.githubusercontent.com/google/material-design-icons/master/png/maps/flight/materialicons/24dp/2x/baseline_flight_black_24dp.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
