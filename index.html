@@ -1249,7 +1249,7 @@
 
     // --- NAVIGATION TABS ---
     function switchTab(tabId) {
-      const views = ['countdown', 'checklist', 'notes'];
+      const views = ['countdown', 'checklist', 'notes', 'budget'];
       views.forEach(v => {
         const section = document.getElementById(`view-${v}`);
         const btn = document.getElementById(`nav-btn-${v}`);
@@ -1343,6 +1343,7 @@
         fetchDestinationWeather();
         closeModal('modal-edit');
         showToast('Resan har uppdaterats!');
+        renderBudget();
       });
 
       // Add item to packing list
