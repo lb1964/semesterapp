@@ -1317,6 +1317,30 @@
 
     // --- EVENT LISTENERS ---
     function setupEventListeners() {
+      // Lägg till utlägg
+      const formExp = document.getElementById('form-add-expense');
+      if (formExp) {
+        formExp.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const nameInput = document.getElementById('input-expense-name');
+          const amountInput = document.getElementById('input-expense-amount');
+          const title = nameInput.value.trim();
+          const amount = Number(amountInput.value);
+
+          if (title && amount > 0) {
+            appData.expenses.unshift({
+              id: Date.now(),
+              title: title,
+              amount: amount
+            });
+            saveState();
+            renderBudget();
+            nameInput.value = '';
+            amountInput.value = '';
+            showToast(`Lade till utlägg: ${title}`);
+          }
+        });
+      }
       // Edit trip modal buttons
       document.getElementById('btn-edit-modal').addEventListener('click', () => openModal('modal-edit'));
       document.getElementById('btn-theme-modal').addEventListener('click', () => openModal('modal-theme'));
