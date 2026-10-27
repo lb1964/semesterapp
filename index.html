@@ -728,9 +728,19 @@
       errBox.classList.add('hidden');
       bodyBox.classList.remove('hidden');
 
-      // Rensa eventuella landstillägg för att ge geokodaren renare träffar (t.ex. "Mallorca, Spanien" -> "Mallorca")
       const queryCity = appData.destination.split(',')[0].trim();
-      locLabel.textContent = queryCity;
+
+      // Kolla om vi har sparat väder i minnet för resmålet
+      const cachedWeather = localStorage.getItem('last_saved_weather');
+      if (cachedWeather) {
+        try {
+          const parsed = JSON.parse(cachedWeather);
+          if (parsed.city.toLowerCase() === queryCity.toLowerCase()) {
+            locLabel.textContent = parsed.label;
+            renderWeatherData(parsed.data);
+          }
+        } catch (e) {}
+      }
 
       try {
         // 1. Slå upp koordinater via Open-Meteo Geocoding
@@ -742,18 +752,29 @@
         }
 
         const { latitude, longitude, name, country } = geoData.results[0];
-        locLabel.textContent = country ? `${name}, ${country}` : name;
+        const fullLabel = country ? `${name}, ${country}` : name;
+        locLabel.textContent = fullLabel;
 
         // 2. Hämta väderdata & 3 dagars prognos
         const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=3`;
         const weatherRes = await fetch(weatherUrl);
         const wData = await weatherRes.json();
 
+        // Spara senaste prognosen offline
+        localStorage.setItem('last_saved_weather', JSON.stringify({
+          city: queryCity,
+          label: fullLabel,
+          data: wData
+        }));
+
         renderWeatherData(wData);
       } catch (err) {
-        console.warn('Väderfel:', err);
-        errBox.classList.remove('hidden');
-        locLabel.textContent = appData.destination;
+        console.warn('Offline eller väderfel:', err);
+        // Om vi inte redan hade sparat väder, visa felmeddelande
+        if (!cachedWeather) {
+          errBox.classList.remove('hidden');
+          locLabel.textContent = appData.destination;
+        }
       } finally {
         if (refreshIcon) refreshIcon.classList.remove('animate-spin');
       }
