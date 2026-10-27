@@ -916,7 +916,67 @@
       update();
       setInterval(update, 10000);
     }
+// --- BUDGET-FUNKTIONER ---
+    function renderBudget() {
+      if (typeof appData.budget === 'undefined') appData.budget = 10000;
+      if (!Array.isArray(appData.expenses)) appData.expenses = [];
 
+      const totalSpent = appData.expenses.reduce((sum, item) => sum + Number(item.amount), 0);
+      const remaining = appData.budget - totalSpent;
+      const percent = appData.budget > 0 ? Math.min(Math.round((totalSpent / appData.budget) * 100), 100) : 0;
+
+      document.getElementById('budget-display-total').textContent = `${appData.budget.toLocaleString('sv-SE')} kr`;
+      document.getElementById('budget-display-spent').textContent = `${totalSpent.toLocaleString('sv-SE')} kr`;
+      document.getElementById('budget-display-remaining').textContent = `${remaining.toLocaleString('sv-SE')} kr`;
+
+      const bar = document.getElementById('budget-progress-bar');
+      bar.style.width = `${percent}%`;
+      bar.className = remaining < 0 
+        ? 'bg-rose-500 h-full rounded-full transition-all duration-300' 
+        : 'bg-cyan-600 h-full rounded-full transition-all duration-300';
+
+      // Rendera utläggslistan
+      const listEl = document.getElementById('expense-list');
+      const emptyEl = document.getElementById('expense-empty');
+      listEl.innerHTML = '';
+
+      if (appData.expenses.length === 0) {
+        emptyEl.classList.remove('hidden');
+      } else {
+        emptyEl.classList.add('hidden');
+        appData.expenses.forEach(exp => {
+          const li = document.createElement('li');
+          li.className = 'flex items-center justify-between p-2.5 rounded-2xl bg-white border border-slate-200 text-xs shadow-sm';
+          li.innerHTML = `
+            <span class="font-semibold text-slate-800">${escapeHtml(exp.title)}</span>
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-900">${Number(exp.amount).toLocaleString('sv-SE')} kr</span>
+              <button onclick="deleteExpense(${exp.id})" class="text-slate-400 hover:text-rose-500 transition p-1">
+                <span class="material-symbols-rounded text-base">delete</span>
+              </button>
+            </div>
+          `;
+          listEl.appendChild(li);
+        });
+      }
+    }
+
+    function editTotalBudget() {
+      const current = appData.budget || 0;
+      const val = prompt('Ange total semesterbudget (SEK):', current);
+      if (val !== null && !isNaN(Number(val)) && Number(val) >= 0) {
+        appData.budget = Number(val);
+        saveState();
+        renderBudget();
+        showToast('Budget uppdaterad!');
+      }
+    }
+
+    function deleteExpense(id) {
+      appData.expenses = appData.expenses.filter(e => e.id !== id);
+      saveState();
+      renderBudget();
+    }
     // --- RENDER FUNCTIONS ---
     function renderAll() {
       // Destination & Header
