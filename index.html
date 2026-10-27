@@ -658,7 +658,98 @@
       setupEventListeners();
       startCountdownTimer();
     }
+// --- VÄDERFUNKTIONER (Open-Meteo) ---
+    // Tolkar WMO Weather Codes till svensk text och ikoner
+    function getWeatherMeta(code) {
+      if (code === 0) return { desc: 'Klart & soligt', icon: 'sunny', emoji: '☀️' };
+      if ([1, 2].includes(code)) return { desc: 'Halvklart', icon: 'partly_cloudy_day', emoji: '⛅' };
+      if (code === 3) return { desc: 'Mulet', icon: 'cloud', emoji: '☁️' };
+      if ([45, 48].includes(code)) return { desc: 'Dimmigt', icon: 'foggy', emoji: '🌫️' };
+      if ([51, 53, 55, 61, 63, 65].includes(code)) return { desc: 'Regn', icon: 'rainy', emoji: '🌧️' };
+      if ([71, 73, 75, 77, 85, 86].includes(code)) return { desc: 'Snöfall', icon: 'weather_snowy', emoji: '🌨️' };
+      if ([80, 81, 82].includes(code)) return { desc: 'Regnskurar', icon: 'rainy', emoji: '🌦️' };
+      if ([95, 96, 99].includes(code)) return { desc: 'Åska', icon: 'thunderstorm', emoji: '⛈️' };
+      return { desc: 'Växlande', icon: 'cloud', emoji: '🌤️' };
+    }
 
+    async function fetchDestinationWeather(force = false) {
+      const refreshIcon = document.getElementById('weather-refresh-icon');
+      if (refreshIcon) refreshIcon.classList.add('animate-spin');
+
+      const locLabel = document.getElementById('weather-location-label');
+      const errBox = document.getElementById('weather-error');
+      const bodyBox = document.getElementById('weather-body');
+
+      errBox.classList.add('hidden');
+      bodyBox.classList.remove('hidden');
+
+      // Rensa eventuella landstillägg för att ge geokodaren renare träffar (t.ex. "Mallorca, Spanien" -> "Mallorca")
+      const queryCity = appData.destination.split(',')[0].trim();
+      locLabel.textContent = queryCity;
+
+      try {
+        // 1. Slå upp koordinater via Open-Meteo Geocoding
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(queryCity)}&count=1&language=sv&format=json`);
+        const geoData = await geoRes.json();
+
+        if (!geoData.results || geoData.results.length === 0) {
+          throw new Error('Hittade inte platsen');
+        }
+
+        const { latitude, longitude, name, country } = geoData.results[0];
+        locLabel.textContent = country ? `${name}, ${country}` : name;
+
+        // 2. Hämta väderdata & 3 dagars prognos
+        const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=3`;
+        const weatherRes = await fetch(weatherUrl);
+        const wData = await weatherRes.json();
+
+        renderWeatherData(wData);
+      } catch (err) {
+        console.warn('Väderfel:', err);
+        errBox.classList.remove('hidden');
+        locLabel.textContent = appData.destination;
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove('animate-spin');
+      }
+    }
+
+    function renderWeatherData(data) {
+      const cur = data.current;
+      const daily = data.daily;
+      const meta = getWeatherMeta(cur.weather_code);
+
+      // Aktuellt väder
+      document.getElementById('weather-temp-now').textContent = `${Math.round(cur.temperature_2m)}°C`;
+      document.getElementById('weather-desc-now').textContent = meta.desc;
+      document.getElementById('weather-wind').textContent = `💨 ${Math.round(cur.wind_speed_10m)} km/h`;
+      document.getElementById('weather-humidity').textContent = `💧 ${cur.relative_humidity_2m}%`;
+      document.getElementById('weather-icon-main').textContent = meta.icon;
+      document.getElementById('weather-large-emoji').textContent = meta.emoji;
+
+      // 3-dagarsprognos
+      const forecastGrid = document.getElementById('weather-forecast-grid');
+      forecastGrid.innerHTML = '';
+
+      const weekdays = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
+
+      for (let i = 0; i < 3; i++) {
+        const dateObj = new Date(daily.time[i]);
+        const dayName = i === 0 ? 'Idag' : weekdays[dateObj.getDay()];
+        const dayMeta = getWeatherMeta(daily.weather_code[i]);
+        const maxTemp = Math.round(daily.temperature_2m_max[i]);
+        const minTemp = Math.round(daily.temperature_2m_min[i]);
+
+        const dayCol = document.createElement('div');
+        dayCol.className = 'bg-white/70 p-2 rounded-2xl border border-white flex flex-col items-center';
+        dayCol.innerHTML = `
+          <span class="text-[10px] font-bold text-slate-500 uppercase">${dayName}</span>
+          <span class="text-xl my-0.5">${dayMeta.emoji}</span>
+          <span class="text-[11px] font-bold text-slate-800">${maxTemp}° <small class="text-slate-400 font-normal">${minTemp}°</small></span>
+        `;
+        forecastGrid.appendChild(dayCol);
+      }
+    }
     function loadState() {
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -669,6 +760,7 @@
       return defaultState;
     }
 
+    
     function saveState() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
