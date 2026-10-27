@@ -657,6 +657,7 @@
       renderAll();
       setupEventListeners();
       startCountdownTimer();
+      fetchDestinationWeather();
     }
 // --- VÄDERFUNKTIONER (Open-Meteo) ---
     // Tolkar WMO Weather Codes till svensk text och ikoner
@@ -1187,6 +1188,7 @@
         applyTheme(chosenTheme);
         renderAll();
         updateCountdown();
+        fetchDestinationWeather();
         closeModal('modal-edit');
         showToast('Resan har uppdaterats!');
       });
