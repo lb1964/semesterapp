@@ -950,17 +950,6 @@
       }
     }
 
-    // Live Android status bar clock
-    function setupClock() {
-      const clockEl = document.getElementById('android-clock');
-      function update() {
-        const now = new Date();
-        clockEl.textContent = now.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
-      }
-      update();
-      setInterval(update, 10000);
-    }
-
     // --- FLERA RESOR HANTERING ---
     function renderTripsList() {
       const listEl = document.getElementById('trips-list');
@@ -1530,7 +1519,6 @@ function deleteTrip(tripId, e) {
     }
     // --- INITIALIZATION ---
     function init() {
-      setupClock();
       applyTheme(appData.theme);
       renderAll();
       renderTripsList();
