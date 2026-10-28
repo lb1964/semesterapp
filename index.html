@@ -477,13 +477,57 @@
               </div>
             </div>
 
-            <!-- Lägg till utlägg -->
-            <form id="form-add-expense" class="flex gap-2">
-              <input type="text" id="input-expense-name" required placeholder="T.ex. Middag, Taxi..." class="flex-1 px-3 py-2 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-600 text-slate-800 shadow-sm">
-              <input type="number" id="input-expense-amount" required placeholder="Belopp (kr)" class="w-24 px-3 py-2 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-600 text-slate-800 shadow-sm">
-              <button type="submit" class="bg-cyan-700 active:bg-cyan-800 text-white px-3.5 py-2 rounded-2xl text-xs font-bold shadow-md">
-                <span class="material-symbols-rounded text-base">add</span>
-              </button>
+         <!-- Valutaomvandlare (Snabbkalkylator) -->
+            <div class="bg-white/80 p-3.5 rounded-2xl border border-white space-y-2.5">
+              <div class="flex justify-between items-center text-slate-700 font-bold text-xs">
+                <span class="flex items-center gap-1.5 text-cyan-800">
+                  <span class="material-symbols-rounded text-base">currency_exchange</span> Valutaomvandlare
+                </span>
+                <span id="fx-rate-label" class="text-[10px] text-slate-400 font-normal">1 EUR ≈ -- SEK</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <label class="text-[10px] text-slate-500 font-semibold block mb-0.5">Utländsk valuta</label>
+                  <div class="flex gap-1">
+                    <select id="fx-currency-select" onchange="updateCurrencyRates()" class="text-xs font-bold bg-slate-50 px-2 py-1.5 rounded-xl border border-slate-200 text-slate-700">
+                      <option value="EUR">EUR (€)</option>
+                      <option value="USD">USD ($)</option>
+                      <option value="GBP">GBP (£)</option>
+                      <option value="NOK">NOK</option>
+                      <option value="DKK">DKK</option>
+                      <option value="THB">THB (฿)</option>
+                      <option value="TRY">TRY (₺)</option>
+                      <option value="PLN">PLN (zł)</option>
+                    </select>
+                    <input type="number" id="fx-input-foreign" placeholder="0" oninput="convertFromForeign()" class="w-full text-xs font-bold bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                  </div>
+                </div>
+
+                <div>
+                  <label class="text-[10px] text-slate-500 font-semibold block mb-0.5">Svenska kronor (SEK)</label>
+                  <div class="flex items-center h-[33px]">
+                    <span id="fx-output-sek" class="text-sm font-black text-slate-900 bg-slate-50 w-full px-2.5 py-1.5 rounded-xl border border-slate-200 flex items-center">
+                      0 kr
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lägg till utlägg (med valutaval) -->
+            <form id="form-add-expense" class="flex flex-col gap-2">
+              <input type="text" id="input-expense-name" required placeholder="T.ex. Middag, Taxi..." class="w-full px-3 py-2 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-600 text-slate-800 shadow-sm">
+              <div class="flex gap-2">
+                <select id="input-expense-currency" class="text-xs font-bold bg-white px-2.5 py-2 rounded-2xl border border-slate-200 text-slate-700 shadow-sm">
+                  <option value="SEK">SEK (kr)</option>
+                  <option value="FOREIGN">Vald valuta</option>
+                </select>
+                <input type="number" step="any" id="input-expense-amount" required placeholder="Belopp" class="flex-1 px-3 py-2 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-600 text-slate-800 shadow-sm">
+                <button type="submit" class="bg-cyan-700 active:bg-cyan-800 text-white px-4 py-2 rounded-2xl text-xs font-bold shadow-md flex items-center justify-center">
+                  <span class="material-symbols-rounded text-base">add</span>
+                </button>
+              </div>
             </form>
 
             <!-- Lista över utlägg -->
