@@ -854,6 +854,7 @@
       setupClock();
       applyTheme(appData.theme);
       renderAll();
+      renderTripsList();
       setupEventListeners();
       startCountdownTimer();
       fetchDestinationWeather();
@@ -1451,6 +1452,7 @@
       const modal = document.getElementById(id);
       modal.classList.remove('opacity-0', 'pointer-events-none');
       modal.querySelector('div').classList.remove('translate-y-10');
+      if (id === 'modal-trips') renderTripsList();
     }
 
     function closeModal(id) {
