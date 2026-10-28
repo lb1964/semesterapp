@@ -1086,6 +1086,87 @@ function deleteTrip(tripId, e) {
         showToast('Resan togs bort.');
       }
     }
+    // --- VALUTAOMVANDLARE ---
+    // Standardkurser som fallback om appen öppnas helt offline
+    const defaultExchangeRates = {
+      EUR: 11.40,
+      USD: 10.50,
+      GBP: 13.50,
+      NOK: 0.98,
+      DKK: 1.53,
+      THB: 0.29,
+      TRY: 0.31,
+      PLN: 2.65
+    };
+
+    let exchangeRates = loadExchangeRates();
+
+    function loadExchangeRates() {
+      try {
+        const cached = localStorage.getItem('vacation_exchange_rates');
+        if (cached) return JSON.parse(cached);
+      } catch (e) {}
+      return defaultExchangeRates;
+    }
+
+    async function fetchLiveExchangeRates() {
+      try {
+        // Kostnadsfritt API baserat på SEK mot övriga valutor
+        const res = await fetch('https://open.er-api.com/v6/latest/SEK');
+        const data = await res.json();
+        if (data && data.rates) {
+          const newRates = {};
+          Object.keys(defaultExchangeRates).forEach(cur => {
+            if (data.rates[cur]) {
+              // Räkna om så vi får hur många SEK 1 enhet av den utländska valutan är värd
+              newRates[cur] = parseFloat((1 / data.rates[cur]).toFixed(2));
+            }
+          });
+          exchangeRates = { ...defaultExchangeRates, ...newRates };
+          localStorage.setItem('vacation_exchange_rates', JSON.stringify(exchangeRates));
+          updateCurrencyRates();
+        }
+      } catch (e) {
+        console.warn('Kunde inte uppdatera växelkurser online, använder offline-kurser:', e);
+      }
+    }
+
+    function updateCurrencyRates() {
+      const select = document.getElementById('fx-currency-select');
+      const label = document.getElementById('fx-rate-label');
+      const expCurrencySelect = document.getElementById('input-expense-currency');
+      if (!select) return;
+
+      const code = select.value;
+      const rate = exchangeRates[code] || 1;
+
+      if (label) {
+        label.textContent = `1 ${code} ≈ ${rate} SEK`;
+      }
+      if (expCurrencySelect) {
+        const foreignOpt = expCurrencySelect.querySelector('option[value="FOREIGN"]');
+        if (foreignOpt) foreignOpt.textContent = code;
+      }
+
+      convertFromForeign();
+    }
+
+    function convertFromForeign() {
+      const select = document.getElementById('fx-currency-select');
+      const input = document.getElementById('fx-input-foreign');
+      const output = document.getElementById('fx-output-sek');
+      if (!select || !input || !output) return;
+
+      const val = parseFloat(input.value);
+      if (isNaN(val) || val <= 0) {
+        output.textContent = '0 kr';
+        return;
+      }
+
+      const rate = exchangeRates[select.value] || 1;
+      const sekTotal = Math.round(val * rate);
+      output.textContent = `${sekTotal.toLocaleString('sv-SE')} kr`;
+    }
     // --- BUDGET-FUNKTIONER ---
     function renderBudget() {
       if (typeof appData.budget === 'undefined') appData.budget = 10000;
