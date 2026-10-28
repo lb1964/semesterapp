@@ -847,16 +847,7 @@
 
     let activeFilter = 'alla';
 
-    // --- INITIALIZATION ---
-    function init() {
-      setupClock();
-      applyTheme(appData.theme);
-      renderAll();
-      renderTripsList();
-      setupEventListeners();
-      startCountdownTimer();
-      fetchDestinationWeather();
-    }
+
 // --- VÄDERFUNKTIONER (Open-Meteo) ---
     // Tolkar WMO Weather Codes till svensk text och ikoner
     function getWeatherMeta(code) {
@@ -1050,8 +1041,12 @@
       showToast(`Resan "${title.trim()}" lades till!`);
     }
 
-    function deleteTrip(tripId, e) {
+function deleteTrip(tripId, e) {
       e.stopPropagation();
+      if (store.trips.length <= 1) {
+        showToast('Du måste ha minst en resa kvar!');
+        return;
+      }
       const toDelete = store.trips.find(t => t.id === tripId);
       if (!toDelete) return;
 
@@ -1545,7 +1540,17 @@
         }
       });
     }
-
+    // --- INITIALIZATION ---
+    function init() {
+      setupClock();
+      applyTheme(appData.theme);
+      renderAll();
+      renderTripsList();
+      setupEventListeners();
+      startCountdownTimer();
+      fetchDestinationWeather();
+    }
+    
     // Run on startup
     window.onload = init;
   </script>
