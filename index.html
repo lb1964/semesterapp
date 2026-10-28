@@ -796,8 +796,6 @@
       }
     }
 
-    let appData = loadState();
-
     // Swedish Travel Tips
     const travelTips = [
       "Ladda ner offline-kartor på Google Maps innan du lyfter!",
@@ -1187,6 +1185,7 @@
       renderChecklist();
       updatePackingProgress();
       renderBudget();
+      renderTripsList();
     }
 
     // Countdown loop calculation
