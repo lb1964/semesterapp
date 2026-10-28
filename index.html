@@ -163,16 +163,19 @@
         <!-- Floating theme emojis dynamically injected -->
       </div>
 
-      <!-- App Top Bar -->
+    <!-- App Top Bar -->
       <div class="px-5 py-2.5 flex items-center justify-between z-20">
         <div class="flex items-center gap-2 text-white">
           <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-sm">
             <span id="theme-header-icon" class="material-symbols-rounded text-2xl text-amber-300">flight_takeoff</span>
           </div>
-          <div>
-            <span class="text-[11px] font-semibold tracking-wider uppercase text-white/70 block">Semesterklockan</span>
-            <h1 id="topbar-title" class="text-base font-bold text-white tracking-tight leading-none truncate max-w-[170px]">Resa</h1>
-          </div>
+          <!-- Klickbar reseväljare -->
+          <button onclick="openModal('modal-trips')" class="text-left flex items-center gap-1 group">
+            <div>
+              <span class="text-[10px] font-semibold tracking-wider uppercase text-white/70 block">Aktiv resa ▾</span>
+              <h1 id="topbar-title" class="text-base font-bold text-white tracking-tight leading-none truncate max-w-[140px] sm:max-w-[170px] group-active:opacity-80">Resa</h1>
+            </div>
+          </button>
         </div>
 
         <!-- Action Buttons -->
@@ -667,7 +670,37 @@
         </div>
       </div>
     </div>
+      
+<!-- MANAGE TRIPS MODAL (Växla & skapa resor) -->
+    <div id="modal-trips" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+      <div class="bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl transform translate-y-10 transition-transform duration-300 max-h-[85vh] flex flex-col">
+        <div class="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-4 sm:hidden"></div>
+        
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-lg font-bold text-slate-900 font-display flex items-center gap-2">
+            <span class="material-symbols-rounded text-cyan-700">luggage</span> Mina resor
+          </h3>
+          <button onclick="closeModal('modal-trips')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+            <span class="material-symbols-rounded text-lg">close</span>
+          </button>
+        </div>
 
+        <p class="text-xs text-slate-500 mb-3">Välj vilken semesterresa du vill visa eller planera.</p>
+
+        <!-- Lista över alla resor -->
+        <ul id="trips-list" class="space-y-2 overflow-y-auto pr-1 flex-1 max-h-[300px]">
+          <!-- Fylls dynamiskt av JS -->
+        </ul>
+
+        <!-- Skapa ny resa-knapp -->
+        <div class="pt-4 mt-2 border-t border-slate-100">
+          <button onclick="addNewTripPrompt()" class="w-full py-3 bg-cyan-700 hover:bg-cyan-800 active:bg-cyan-900 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md transition">
+            <span class="material-symbols-rounded text-base">add_circle</span> Lägg till en ny resa
+          </button>
+        </div>
+      </div>
+    </div>
+      
     <!-- Notification Toast Element -->
     <div id="toast" class="fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-slate-900/90 text-white text-xs px-4 py-2 rounded-full shadow-2xl backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 z-50 flex items-center gap-2">
       <span class="material-symbols-rounded text-sm text-emerald-400">check_circle</span>
