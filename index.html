@@ -142,19 +142,7 @@
   <!-- Mobile Device Shell Frame (looks like modern Android phone) -->
   <div class="relative w-full max-w-md h-[100dvh] sm:h-[890px] bg-slate-950 sm:rounded-[44px] shadow-2xl sm:border-[8px] sm:border-slate-800 overflow-hidden flex flex-col transition-all">
 
-    <!-- Android Status Bar -->
-    <header class="w-full pt-3 px-6 pb-2 flex justify-between items-center text-white text-xs font-medium z-30 select-none">
-      <div id="android-clock" class="tracking-tight font-semibold">12:30</div>
-      <!-- Camera Punch-hole on Desktop Preview -->
-      <div class="hidden sm:block w-3.5 h-3.5 bg-black rounded-full mx-auto border border-white/10 shadow-inner"></div>
-      <div class="flex items-center gap-1.5 opacity-90 text-[14px]">
-        <span class="material-symbols-rounded text-sm">wifi</span>
-        <span class="material-symbols-rounded text-sm">signal_cellular_4_bar</span>
-        <span class="material-symbols-rounded text-sm">battery_full</span>
-      </div>
-    </header>
-
-    <!-- Dynamic Themed Main View Container -->
+        <!-- Dynamic Themed Main View Container -->
     <main id="app-container" class="relative flex-1 flex flex-col overflow-hidden bg-tropical transition-all duration-700">
       
       <!-- Ambient Theme Glow and Particle Decors -->
@@ -164,7 +152,7 @@
       </div>
 
     <!-- App Top Bar -->
-      <div class="px-5 py-2.5 flex items-center justify-between z-20">
+      <div class="px-5 pt-4 pb-2.5 flex items-center justify-between z-20">
         <div class="flex items-center gap-2 text-white">
           <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-sm">
             <span id="theme-header-icon" class="material-symbols-rounded text-2xl text-amber-300">flight_takeoff</span>
