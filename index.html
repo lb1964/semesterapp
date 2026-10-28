@@ -970,24 +970,6 @@
         forecastGrid.appendChild(dayCol);
       }
     }
-    function loadState() {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) return JSON.parse(stored);
-      } catch (e) {
-        console.error('Kunde inte läsa lokal lagring:', e);
-      }
-      return defaultState;
-    }
-
-    
-    function saveState() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-      } catch (e) {
-        console.error('Kunde inte spara till lokal lagring:', e);
-      }
-    }
 
     // Live Android status bar clock
     function setupClock() {
