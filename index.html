@@ -711,39 +711,90 @@
 
   <script>
     // --- APP STATE & LOCAL STORAGE ---
-    const STORAGE_KEY = 'vacation_countdown_data_sv';
+    const STORAGE_KEY = 'vacation_countdown_multi_v1';
+    const OLD_STORAGE_KEY = 'vacation_countdown_data_sv';
 
-    // Default sample data (Set to ~45 days in future)
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + 45);
-    futureDate.setHours(7, 30, 0, 0);
+    function createEmptyTrip(title = 'Mallorca, Spanien', daysAhead = 45, theme = 'tropical') {
+      const d = new Date();
+      d.setDate(d.getDate() + daysAhead);
+      d.setHours(7, 30, 0, 0);
 
-    const defaultState = {
-      destination: 'Mallorca, Spanien',
-      targetDate: futureDate.toISOString(),
-      theme: 'tropical',
-      budget: 15000,
-      expenses: [
-        { id: 1, title: 'Flygbiljetter', amount: 4200 },
-        { id: 2, title: 'Hotell deposition', amount: 1500 }
-      ],
-      checklist: [
-        { id: 1, text: 'Pass & ID-kort', packed: true },
-        { id: 2, text: 'Europeiskt Sjukförsäkringskort', packed: true },
-        { id: 3, text: 'Mobil & Laddare / Powerbank', packed: false },
-        { id: 4, text: 'Solkräm & Solglasögon', packed: false },
-        { id: 5, text: 'Badkläder & Strandhandduk', packed: false },
-        { id: 6, text: 'Reseadapter & Hörlurar', packed: false },
-        { id: 7, text: 'Sköna promenadskor', packed: false }
-      ],
-      notes: {
-        flightNo: 'SK 1551',
-        gate: 'Terminal 5, Arlanda',
-        hotel: 'Palma Bay Resort, Calle Palma 14',
-        bookingRef: 'RES-89241',
-        memo: 'Hämta hyrbil hos Avis kl 11:00. Boka bord på tapasbaren vid katedralen till första kvällen!'
+      return {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        destination: title,
+        targetDate: d.toISOString(),
+        theme: theme,
+        budget: 15000,
+        expenses: [],
+        checklist: [
+          { id: 1, text: 'Pass & ID-kort', packed: false },
+          { id: 2, text: 'Mobil & Laddare', packed: false },
+          { id: 3, text: 'Solglasögon', packed: false },
+          { id: 4, text: 'Badkläder', packed: false }
+        ],
+        notes: {
+          flightNo: '',
+          gate: '',
+          hotel: '',
+          bookingRef: '',
+          memo: ''
+        }
+      };
+    }
+
+    // Huvudtillstånd som håller alla resor
+    let store = loadAllTrips();
+    // Den resa som visas just nu
+    let appData = getActiveTrip();
+
+    function loadAllTrips() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) return JSON.parse(stored);
+
+        // Migrera data från den gamla appen så inget du skrivit försvinner
+        const oldData = localStorage.getItem(OLD_STORAGE_KEY);
+        if (oldData) {
+          const old = JSON.parse(oldData);
+          old.id = Date.now();
+          return { activeTripId: old.id, trips: [old] };
+        }
+      } catch (e) {
+        console.error('Kunde inte läsa resor:', e);
       }
-    };
+
+      const defaultTrip = createEmptyTrip('Mallorca, Spanien', 45, 'tropical');
+      return {
+        activeTripId: defaultTrip.id,
+        trips: [defaultTrip]
+      };
+    }
+
+    function getActiveTrip() {
+      const found = store.trips.find(t => t.id === store.activeTripId);
+      if (found) return found;
+      if (store.trips.length > 0) {
+        store.activeTripId = store.trips[0].id;
+        return store.trips[0];
+      }
+      const newTrip = createEmptyTrip();
+      store.trips.push(newTrip);
+      store.activeTripId = newTrip.id;
+      return newTrip;
+    }
+
+    function saveState() {
+      try {
+        // Uppdatera den aktiva resan i reselistan
+        const idx = store.trips.findIndex(t => t.id === appData.id);
+        if (idx !== -1) {
+          store.trips[idx] = appData;
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+      } catch (e) {
+        console.error('Kunde inte spara till lokal lagring:', e);
+      }
+    }
 
     let appData = loadState();
 
