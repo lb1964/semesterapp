@@ -1000,7 +1000,96 @@
       update();
       setInterval(update, 10000);
     }
-// --- BUDGET-FUNKTIONER ---
+
+    // --- FLERA RESOR HANTERING ---
+    function renderTripsList() {
+      const listEl = document.getElementById('trips-list');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+
+      store.trips.forEach(trip => {
+        const isActive = trip.id === store.activeTripId;
+        const target = new Date(trip.targetDate);
+        const dateStr = target.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' });
+
+        const li = document.createElement('li');
+        li.className = `p-3 rounded-2xl border transition flex items-center justify-between cursor-pointer ${
+          isActive 
+            ? 'bg-cyan-50 border-cyan-500 shadow-sm' 
+            : 'bg-white border-slate-200 hover:bg-slate-50'
+        }`;
+
+        li.innerHTML = `
+          <div class="flex-1" onclick="switchActiveTrip(${trip.id})">
+            <div class="flex items-center gap-1.5">
+              <strong class="text-xs text-slate-900">${escapeHtml(trip.destination)}</strong>
+              ${isActive ? '<span class="text-[10px] bg-cyan-700 text-white font-bold px-2 py-0.5 rounded-full">Aktiv</span>' : ''}
+            </div>
+            <span class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+              <span class="material-symbols-rounded text-xs">calendar_month</span> ${dateStr}
+            </span>
+          </div>
+          ${store.trips.length > 1 ? `
+            <button onclick="deleteTrip(${trip.id}, event)" class="p-2 text-slate-400 hover:text-rose-500 transition">
+              <span class="material-symbols-rounded text-base">delete</span>
+            </button>
+          ` : ''}
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    function switchActiveTrip(tripId) {
+      store.activeTripId = tripId;
+      appData = getActiveTrip();
+      saveState();
+      applyTheme(appData.theme);
+      renderAll();
+      updateCountdown();
+      fetchDestinationWeather();
+      closeModal('modal-trips');
+      showToast(`Bytte till ${appData.destination}!`);
+    }
+
+    function addNewTripPrompt() {
+      const title = prompt('Vad är resmålet för den nya semestern?', 't.ex. Rom, Italien');
+      if (!title || !title.trim()) return;
+
+      const newTrip = createEmptyTrip(title.trim(), 60, 'city');
+      store.trips.push(newTrip);
+      store.activeTripId = newTrip.id;
+      appData = newTrip;
+
+      saveState();
+      applyTheme(appData.theme);
+      renderAll();
+      updateCountdown();
+      fetchDestinationWeather();
+      closeModal('modal-trips');
+      showToast(`Resan "${title.trim()}" lades till!`);
+    }
+
+    function deleteTrip(tripId, e) {
+      e.stopPropagation();
+      const toDelete = store.trips.find(t => t.id === tripId);
+      if (!toDelete) return;
+
+      if (confirm(`Är du säker på att du vill ta bort resan "${toDelete.destination}"?`)) {
+        store.trips = store.trips.filter(t => t.id !== tripId);
+        if (store.activeTripId === tripId) {
+          store.activeTripId = store.trips[0].id;
+        }
+        appData = getActiveTrip();
+        saveState();
+        applyTheme(appData.theme);
+        renderAll();
+        updateCountdown();
+        fetchDestinationWeather();
+        renderTripsList();
+        showToast('Resan togs bort.');
+      }
+    }
+    // --- BUDGET-FUNKTIONER ---
     function renderBudget() {
       if (typeof appData.budget === 'undefined') appData.budget = 10000;
       if (!Array.isArray(appData.expenses)) appData.expenses = [];
