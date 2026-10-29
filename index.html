@@ -229,7 +229,22 @@
                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide mt-0.5">Sek</span>
               </div>
             </div>
-
+            <!-- Semestermätare under pågående semester -->
+            <div id="vacation-progress-container" class="hidden mt-4 pt-3 border-t border-slate-200/60 space-y-1.5">
+              <div class="flex justify-between items-center text-[11px] font-bold text-slate-700">
+                <span class="flex items-center gap-1 text-emerald-700">
+                  <span class="material-symbols-rounded text-sm">flight_land</span> Semestern pågår
+                </span>
+                <span id="vacation-progress-percent">0%</span>
+              </div>
+              <div class="w-full bg-slate-200/80 rounded-full h-3 overflow-hidden p-0.5">
+                <div id="vacation-progress-bar" class="bg-gradient-to-r from-emerald-500 to-teal-600 h-full rounded-full transition-all duration-700 w-0"></div>
+              </div>
+              <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                <span id="vacation-progress-elapsed">Dag 1</span>
+                <span id="vacation-progress-left">X dagar kvar</span>
+              </div>
+            </div>
             <!-- Total stats ticker banner -->
             <div class="mt-4 pt-3 border-t border-slate-200/60 flex justify-between items-center text-[11px] text-slate-600">
               <span class="flex items-center gap-1">
@@ -614,7 +629,17 @@
               <input type="time" id="input-trip-time" required class="w-full p-2.5 rounded-2xl bg-slate-50 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-600 text-slate-800 text-xs">
             </div>
           </div>
-
+          <!-- Slutdatum & Hemkomsttid -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1 font-semibold">Slutdatum / Hemkomst</label>
+              <input type="date" id="input-trip-end-date" required class="w-full p-2.5 rounded-2xl bg-slate-50 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-600 text-slate-800 text-xs">
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1 font-semibold">Hemkomsttid</label>
+              <input type="time" id="input-trip-end-time" required class="w-full p-2.5 rounded-2xl bg-slate-50 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-600 text-slate-800 text-xs">
+            </div>
+          </div>
           <div>
             <label class="block text-slate-600 mb-1 font-semibold">Resans tema</label>
             <select id="input-trip-theme" class="w-full p-3 rounded-2xl bg-slate-50 border border-slate-300 focus:outline-none focus:ring-2 focus:ring-cyan-600 text-slate-800 text-xs">
