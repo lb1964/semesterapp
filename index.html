@@ -1184,7 +1184,39 @@ function deleteTrip(tripId, e) {
         showToast('Ingen aktiv resa att dela.');
         return;
       }
-      async function importSingleTripFromClipboard() {
+
+      const tripSharePayload = {
+        app: 'Semesterklockan_SingleTrip',
+        trip: appData
+      };
+
+      const shareText = JSON.stringify(tripSharePayload);
+
+      // Använd Web Share API om mobilen stödjer det
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Resa till ${appData.destination}`,
+            text: `Här är reseuppgifterna för vår resa till ${appData.destination}:\n\n${shareText}`
+          });
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return; // Avbröts av användaren
+          console.warn('Web Share stötte på ett problem, kopierar till urklipp istället.');
+        }
+      }
+
+      // Fallback till Urklipp
+      try {
+        await navigator.clipboard.writeText(shareText);
+        showToast('Resedata kopierad till urklipp!');
+      } catch (err) {
+        console.error('Kunde inte kopiera:', err);
+        showToast('Kunde inte kopiera data.');
+      }
+    }
+
+    async function importSingleTripFromClipboard() {
       let clipText = '';
 
       // 1. Försök läsa urklipp direkt via Clipboard API
