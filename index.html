@@ -802,10 +802,16 @@
       d.setDate(d.getDate() + daysAhead);
       d.setHours(7, 30, 0, 0);
 
+      // Slutdatum standard: 7 dagar efter start
+      const endD = new Date(d);
+      endD.setDate(endD.getDate() + 7);
+      endD.setHours(22, 0, 0, 0);
+
       return {
         id: Date.now() + Math.floor(Math.random() * 1000),
         destination: title,
         targetDate: d.toISOString(),
+        endDate: endD.toISOString(), // NYTT FÄLT
         theme: theme,
         budget: 15000,
         expenses: [],
@@ -1481,7 +1487,13 @@ function deleteTrip(tripId, e) {
       document.getElementById('input-trip-date').value = dateIso;
       document.getElementById('input-trip-time').value = `${hours}:${minutes}`;
       document.getElementById('input-trip-theme').value = appData.theme;
+      // NYTT: Fyll i slutdatum i modalen
+      const fallbackEnd = new Date(targetDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const endDate = appData.endDate ? new Date(appData.endDate) : fallbackEnd;
+      document.getElementById('input-trip-end-date').value = endDate.toISOString().split('T')[0];
+      document.getElementById('input-trip-end-time').value = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
 
+      document.getElementById('input-trip-theme').value = appData.theme;
       // Fill Notes section
       document.getElementById('info-flight-no').value = appData.notes.flightNo || '';
       document.getElementById('info-gate').value = appData.notes.gate || '';
