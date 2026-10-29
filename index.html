@@ -730,6 +730,28 @@
             <span class="material-symbols-rounded text-base">add_circle</span> Lägg till en ny resa
           </button>
         </div>
+        <!-- SÄKERHETSKOPIA & DELNING -->
+        <div class="pt-3 mt-3 border-t border-slate-100 space-y-2">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Säkerhetskopia & Delning</span>
+          
+          <div class="grid grid-cols-2 gap-2">
+            <!-- Exportera alla resor -->
+            <button type="button" onclick="exportFullBackup()" class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+              <span class="material-symbols-rounded text-sm text-cyan-700">file_download</span> Exportera
+            </button>
+
+            <!-- Importera fil -->
+            <label class="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer">
+              <span class="material-symbols-rounded text-sm text-cyan-700">file_upload</span> Importera
+              <input type="file" id="input-import-file" accept=".json" class="hidden" onchange="importFullBackup(this)">
+            </label>
+          </div>
+
+          <!-- Dela aktuell resa -->
+          <button type="button" onclick="shareCurrentTrip()" class="w-full py-2.5 px-3 bg-cyan-50 hover:bg-cyan-100 active:scale-95 text-cyan-800 border border-cyan-200 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+            <span class="material-symbols-rounded text-sm">share</span> Dela aktiv resa
+          </button>
+        </div>
       </div>
     </div>
       
@@ -1084,6 +1106,109 @@ function deleteTrip(tripId, e) {
         fetchDestinationWeather();
         renderTripsList();
         showToast('Resan togs bort.');
+      }
+    }
+    // --- BACKUP & DELNING ---
+    function exportFullBackup() {
+      try {
+        const backupData = {
+          app: 'Semesterklockan',
+          version: '1.0',
+          exportedAt: new Date().toISOString(),
+          data: store
+        };
+
+        const jsonStr = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const dateStr = new Date().toISOString().slice(0, 10);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `semesterklockan_backup_${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('Säkerhetskopia sparad!');
+      } catch (err) {
+        console.error('Kunde inte exportera:', err);
+        showToast('Kunde inte skapa backupfil.');
+      }
+    }
+
+    function importFullBackup(inputElement) {
+      const file = inputElement.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const restoredStore = parsed.data || parsed;
+
+          // Validera att filen faktiskt innehåller en giltig resestruktur
+          if (!restoredStore || !Array.isArray(restoredStore.trips) || restoredStore.trips.length === 0) {
+            alert('Ogiltig fil. Den matchar inte formatet för Semesterklockan.');
+            return;
+          }
+
+          if (confirm('Detta ersätter dina nuvarande resor med säkerhetskopian. Vill du fortsätta?')) {
+            store = restoredStore;
+            saveState();
+            appData = getActiveTrip();
+            applyTheme(appData.theme);
+            renderAll();
+            updateCountdown();
+            fetchDestinationWeather();
+            closeModal('modal-trips');
+            showToast('Resor har återställts!');
+          }
+        } catch (err) {
+          console.error('Import misslyckades:', err);
+          alert('Kunde inte läsa in filen. Kontrollera att det är en hel och giltig JSON-fil.');
+        } finally {
+          inputElement.value = ''; // Återställ så samma fil kan väljas igen vid behov
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    async function shareCurrentTrip() {
+      if (!appData) {
+        showToast('Ingen aktiv resa att dela.');
+        return;
+      }
+
+      const tripSharePayload = {
+        app: 'Semesterklockan_SingleTrip',
+        trip: appData
+      };
+
+      const shareText = JSON.stringify(tripSharePayload);
+
+      // Använd Web Share API om mobilen stödjer det
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Resa till ${appData.destination}`,
+            text: `Här är reseuppgifterna för vår resa till ${appData.destination}:\n\n${shareText}`
+          });
+          return;
+        } catch (err) {
+          if (err.name === 'AbortError') return; // Avbröts av användaren
+          console.warn('Web Share stötte på ett problem, kopierar till urklipp istället.');
+        }
+      }
+
+      // Fallback till Urklipp
+      try {
+        await navigator.clipboard.writeText(shareText);
+        showToast('Resedata kopierad till urklipp!');
+      } catch (err) {
+        console.error('Kunde inte kopiera:', err);
+        showToast('Kunde inte kopiera data.');
       }
     }
     // --- VALUTAOMVANDLARE ---
