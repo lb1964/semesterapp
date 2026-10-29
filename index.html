@@ -751,6 +751,10 @@
           <button type="button" onclick="shareCurrentTrip()" class="w-full py-2.5 px-3 bg-cyan-50 hover:bg-cyan-100 active:scale-95 text-cyan-800 border border-cyan-200 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
             <span class="material-symbols-rounded text-sm">share</span> Dela aktiv resa
           </button>
+          <!-- Importera delad resa från urklipp -->
+          <button type="button" onclick="importSingleTripFromClipboard()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+            <span class="material-symbols-rounded text-sm text-cyan-700">content_paste</span> Klistra in delad resa
+          </button>
         </div>
       </div>
     </div>
@@ -1180,6 +1184,74 @@ function deleteTrip(tripId, e) {
         showToast('Ingen aktiv resa att dela.');
         return;
       }
+      async function importSingleTripFromClipboard() {
+      let clipText = '';
+
+      // 1. Försök läsa urklipp direkt via Clipboard API
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          clipText = await navigator.clipboard.readText();
+        }
+      } catch (e) {
+        console.warn('Urklippsbehörighet nekades eller ej tillgänglig:', e);
+      }
+
+      // 2. Fallback: Om webbläsaren blockerar direktåtkomst, visa en textpromt
+      if (!clipText || !clipText.trim()) {
+        clipText = prompt('Klistra in den delade resans text eller JSON här:');
+      }
+
+      if (!clipText || !clipText.trim()) return;
+
+      try {
+        // Filtrera ut eventuell introduktionstext om man delade via WhatsApp/SMS
+        const jsonStartIndex = clipText.indexOf('{');
+        const jsonEndIndex = clipText.lastIndexOf('}');
+
+        if (jsonStartIndex === -1 || jsonEndIndex === -1) {
+          throw new Error('Hittade ingen giltig JSON-data');
+        }
+
+        const rawJson = clipText.slice(jsonStartIndex, jsonEndIndex + 1);
+        const parsed = JSON.parse(rawJson);
+
+        // Kontrollera formatet (stödjer både { trip: {...} } och direkt ett reseobjekt)
+        const incomingTrip = parsed.trip || (parsed.destination && parsed.targetDate ? parsed : null);
+
+        if (!incomingTrip || !incomingTrip.destination || !incomingTrip.targetDate) {
+          alert('Dataformatet känns inte igen som en giltig resa.');
+          return;
+        }
+
+        // 3. Ge resan ett nytt unikt ID så den inte krockar med befintliga resor
+        const importedTrip = {
+          ...incomingTrip,
+          id: Date.now() + Math.floor(Math.random() * 1000)
+        };
+
+        // Säkerställ basattribut om något saknas från en äldre export
+        if (!importedTrip.checklist) importedTrip.checklist = [];
+        if (!importedTrip.expenses) importedTrip.expenses = [];
+        if (!importedTrip.notes) importedTrip.notes = { flightNo: '', gate: '', hotel: '', bookingRef: '', memo: '' };
+
+        // 4. Spara till store och aktivera den nya resan
+        store.trips.push(importedTrip);
+        store.activeTripId = importedTrip.id;
+        appData = importedTrip;
+
+        saveState();
+        applyTheme(appData.theme || 'tropical');
+        renderAll();
+        updateCountdown();
+        fetchDestinationWeather();
+        closeModal('modal-trips');
+
+        showToast(`Resan "${importedTrip.destination}" har importerats!`);
+      } catch (err) {
+        console.error('Kunde inte läsa in delad resa:', err);
+        alert('Kunde inte läsa texten. Kontrollera att hela den kopierade texten klistrades in.');
+      }
+    }
 
       const tripSharePayload = {
         app: 'Semesterklockan_SingleTrip',
