@@ -886,21 +886,21 @@
     }
 
     // Swedish Travel Tips
-    const travelTips = [
-      "Ladda ner offline-kartor på Google Maps innan du lyfter!"
-      "Informera banken eller kolla att ditt bankkort är öppet för utlandsköp."
-      "Rulla kläderna i resväskan istället för att vika – sparar plats och minskar skrynklor!"
-      "Packa alltid ett ombyte och badkläder i handbagaget om väskan skulle bli försenad."
-      "Ta med en tom vattenflaska genom säkerhetskontrollen och fyll på vid gaten."
-      "Se över hemförsäkringens reseskydd före avresa."
-      "Ta med/beställ EU-sjukvårdskortet om du reser inom Europa."
-      "Kolla giltighet på passet och sök visum i tid."
-      "Ta med två betalkort och förvara dem på olika ställen."
-      "Fota pass och biljetter, spara digitalt i mobilen och molnet."
-      "Ladda ner appen UD Resklart för krisinfo och råd."
-      "Packa viktiga mediciner och ett ombyte i handbagaget."
-      "Kolla upp vaccinationer hos 1177 i god tid."
-      "Väg väskan innan du åker till flyget."
+const travelTips = [
+      "Ladda ner offline-kartor på Google Maps innan du lyfter!",
+      "Informera banken eller kolla att ditt bankkort är öppet för utlandsköp.",
+      "Rulla kläderna i resväskan istället för att vika – sparar plats och minskar skrynklor!",
+      "Packa alltid ett ombyte och badkläder i handbagaget om väskan skulle bli försenad.",
+      "Ta med en tom vattenflaska genom säkerhetskontrollen och fyll på vid gaten.",
+      "Se över hemförsäkringens reseskydd före avresa.",
+      "Ta med/beställ EU-sjukvårdskortet om du reser inom Europa.",
+      "Kolla giltighet på passet och sök visum i tid.",
+      "Ta med två betalkort och förvara dem på olika ställen.",
+      "Fota pass och biljetter, spara digitalt i mobilen och molnet.",
+      "Ladda ner appen UD Resklart för krisinfo och råd.",
+      "Packa viktiga mediciner och ett ombyte i handbagaget.",
+      "Kolla upp vaccinationer hos 1177 i god tid.",
+      "Väg väskan innan du åker till flyget.",
       "Lås hemmet, stäng av vatten och dra ur elkontakter."
     ];
 
@@ -1514,7 +1514,7 @@ function deleteTrip(tripId, e) {
       setInterval(updateCountdown, 1000);
     }
 
-    function updateCountdown() {
+function updateCountdown() {
       const now = new Date().getTime();
       const startDate = new Date(appData.targetDate).getTime();
       const fallbackEnd = startDate + 7 * 24 * 60 * 60 * 1000;
@@ -1544,7 +1544,7 @@ function deleteTrip(tripId, e) {
         return;
       }
 
-      // 2. LÄGE: SEMESTERN PÅGÅR JUST NU! (Mellan start- och slutdatum)
+      // 2. LÄGE: SEMESTERN PÅGÅR JUST NU
       if (now >= startDate && now < endDate) {
         const timeLeft = endDate - now;
         const totalVacationDuration = endDate - startDate;
@@ -1568,7 +1568,6 @@ function deleteTrip(tripId, e) {
         statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Pågår nu!`;
         statusChip.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 flex items-center gap-1";
 
-        // Visa och uppdatera semestermätaren
         if (meterContainer) {
           meterContainer.classList.remove('hidden');
           document.getElementById('vacation-progress-bar').style.width = `${percent}%`;
@@ -1606,7 +1605,6 @@ function deleteTrip(tripId, e) {
       statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Räknar ner`;
       statusChip.className = "px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1";
 
-      // Arbetsdagar
       let workdays = 0;
       let cur = new Date();
       const end = new Date(appData.targetDate);
