@@ -1179,7 +1179,7 @@ function deleteTrip(tripId, e) {
       reader.readAsText(file);
     }
 
-    async function shareCurrentTrip() {
+   async function shareCurrentTrip() {
       if (!appData) {
         showToast('Ingen aktiv resa att dela.');
         return;
@@ -1192,7 +1192,7 @@ function deleteTrip(tripId, e) {
 
       const shareText = JSON.stringify(tripSharePayload);
 
-      // Använd Web Share API om mobilen stödjer det
+      // Använd Web Share API om enheten stödjer det
       if (navigator.share) {
         try {
           await navigator.share({
@@ -1201,7 +1201,7 @@ function deleteTrip(tripId, e) {
           });
           return;
         } catch (err) {
-          if (err.name === 'AbortError') return; // Avbröts av användaren
+          if (err.name === 'AbortError') return; // Användaren avbröt själv
           console.warn('Web Share stötte på ett problem, kopierar till urklipp istället.');
         }
       }
@@ -1228,7 +1228,7 @@ function deleteTrip(tripId, e) {
         console.warn('Urklippsbehörighet nekades eller ej tillgänglig:', e);
       }
 
-      // 2. Fallback: Om webbläsaren blockerar direktåtkomst, visa en textpromt
+      // 2. Fallback: Om webbläsaren blockerar direktåtkomst, visa prompt
       if (!clipText || !clipText.trim()) {
         clipText = prompt('Klistra in den delade resans text eller JSON här:');
       }
@@ -1236,18 +1236,17 @@ function deleteTrip(tripId, e) {
       if (!clipText || !clipText.trim()) return;
 
       try {
-        // Filtrera ut eventuell introduktionstext om man delade via WhatsApp/SMS
+        // Filtrera ut eventuell introduktionstext
         const jsonStartIndex = clipText.indexOf('{');
         const jsonEndIndex = clipText.lastIndexOf('}');
 
         if (jsonStartIndex === -1 || jsonEndIndex === -1) {
-          throw new Error('Hittade ingen giltig JSON-data');
+          throw new Error('Hittade ingen JSON-data');
         }
 
         const rawJson = clipText.slice(jsonStartIndex, jsonEndIndex + 1);
         const parsed = JSON.parse(rawJson);
 
-        // Kontrollera formatet (stödjer både { trip: {...} } och direkt ett reseobjekt)
         const incomingTrip = parsed.trip || (parsed.destination && parsed.targetDate ? parsed : null);
 
         if (!incomingTrip || !incomingTrip.destination || !incomingTrip.targetDate) {
@@ -1255,18 +1254,16 @@ function deleteTrip(tripId, e) {
           return;
         }
 
-        // 3. Ge resan ett nytt unikt ID så den inte krockar med befintliga resor
+        // Tilldela nytt unikt id
         const importedTrip = {
           ...incomingTrip,
           id: Date.now() + Math.floor(Math.random() * 1000)
         };
 
-        // Säkerställ basattribut om något saknas från en äldre export
         if (!importedTrip.checklist) importedTrip.checklist = [];
         if (!importedTrip.expenses) importedTrip.expenses = [];
         if (!importedTrip.notes) importedTrip.notes = { flightNo: '', gate: '', hotel: '', bookingRef: '', memo: '' };
 
-        // 4. Spara till store och aktivera den nya resan
         store.trips.push(importedTrip);
         store.activeTripId = importedTrip.id;
         appData = importedTrip;
@@ -1282,37 +1279,6 @@ function deleteTrip(tripId, e) {
       } catch (err) {
         console.error('Kunde inte läsa in delad resa:', err);
         alert('Kunde inte läsa texten. Kontrollera att hela den kopierade texten klistrades in.');
-      }
-    }
-
-      const tripSharePayload = {
-        app: 'Semesterklockan_SingleTrip',
-        trip: appData
-      };
-
-      const shareText = JSON.stringify(tripSharePayload);
-
-      // Använd Web Share API om mobilen stödjer det
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: `Resa till ${appData.destination}`,
-            text: `Här är reseuppgifterna för vår resa till ${appData.destination}:\n\n${shareText}`
-          });
-          return;
-        } catch (err) {
-          if (err.name === 'AbortError') return; // Avbröts av användaren
-          console.warn('Web Share stötte på ett problem, kopierar till urklipp istället.');
-        }
-      }
-
-      // Fallback till Urklipp
-      try {
-        await navigator.clipboard.writeText(shareText);
-        showToast('Resedata kopierad till urklipp!');
-      } catch (err) {
-        console.error('Kunde inte kopiera:', err);
-        showToast('Kunde inte kopiera data.');
       }
     }
     // --- VALUTAOMVANDLARE ---
