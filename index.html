@@ -1516,8 +1516,9 @@ function deleteTrip(tripId, e) {
 
     function updateCountdown() {
       const now = new Date().getTime();
-      const target = new Date(appData.targetDate).getTime();
-      const diff = target - now;
+      const startDate = new Date(appData.targetDate).getTime();
+      const fallbackEnd = startDate + 7 * 24 * 60 * 60 * 1000;
+      const endDate = appData.endDate ? new Date(appData.endDate).getTime() : fallbackEnd;
 
       const daysEl = document.getElementById('count-days');
       const hoursEl = document.getElementById('count-hours');
@@ -1525,19 +1526,98 @@ function deleteTrip(tripId, e) {
       const secEl = document.getElementById('count-seconds');
       const statusChip = document.getElementById('status-chip');
       const secProgress = document.getElementById('sec-progress');
+      const meterContainer = document.getElementById('vacation-progress-container');
 
-      if (diff <= 0) {
-        // Vacation is here!
+      // 1. LÄGE: SEMESTERN HAR PASSERAT HELT
+      if (now >= endDate) {
         daysEl.textContent = '0';
         hoursEl.textContent = '00';
         minEl.textContent = '00';
         secEl.textContent = '00';
-        statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Trevlig resa!`;
-        statusChip.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 flex items-center gap-1";
-        document.getElementById('count-workdays').textContent = '0 arbetsdagar kvar';
-        document.getElementById('count-sleeps').textContent = 'Semesterdags!';
+        if (secProgress) secProgress.style.width = '0%';
+        if (meterContainer) meterContainer.classList.add('hidden');
+
+        statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span> Avslutad`;
+        statusChip.className = "px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 flex items-center gap-1";
+        document.getElementById('count-workdays').textContent = 'Välkommen hem!';
+        document.getElementById('count-sleeps').textContent = 'Minnen för livet';
         return;
       }
+
+      // 2. LÄGE: SEMESTERN PÅGÅR JUST NU! (Mellan start- och slutdatum)
+      if (now >= startDate && now < endDate) {
+        const timeLeft = endDate - now;
+        const totalVacationDuration = endDate - startDate;
+        const elapsed = now - startDate;
+        const percent = Math.min(100, Math.max(0, Math.round((elapsed / totalVacationDuration) * 100)));
+
+        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+        daysEl.textContent = days;
+        hoursEl.textContent = String(hours).padStart(2, '0');
+        minEl.textContent = String(minutes).padStart(2, '0');
+        secEl.textContent = String(seconds).padStart(2, '0');
+
+        if (secProgress) {
+          secProgress.style.width = `${((60 - seconds) / 60) * 100}%`;
+        }
+
+        statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Pågår nu!`;
+        statusChip.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 flex items-center gap-1";
+
+        // Visa och uppdatera semestermätaren
+        if (meterContainer) {
+          meterContainer.classList.remove('hidden');
+          document.getElementById('vacation-progress-bar').style.width = `${percent}%`;
+          document.getElementById('vacation-progress-percent').textContent = `${percent}% avklarad`;
+
+          const elapsedDays = Math.floor(elapsed / (1000 * 60 * 60 * 24)) + 1;
+          const totalDays = Math.ceil(totalVacationDuration / (1000 * 60 * 60 * 24));
+          document.getElementById('vacation-progress-elapsed').textContent = `Dag ${elapsedDays} av ${totalDays}`;
+          document.getElementById('vacation-progress-left').textContent = `${days} d, ${hours} tim kvar`;
+        }
+
+        document.getElementById('count-workdays').textContent = 'Njut av ledigheten!';
+        document.getElementById('count-sleeps').textContent = `${days} nätter kvar av resan`;
+        return;
+      }
+
+      // 3. LÄGE: INFÖR RESAN (Vanlig nedräkning)
+      if (meterContainer) meterContainer.classList.add('hidden');
+
+      const diff = startDate - now;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      daysEl.textContent = days;
+      hoursEl.textContent = String(hours).padStart(2, '0');
+      minEl.textContent = String(minutes).padStart(2, '0');
+      secEl.textContent = String(seconds).padStart(2, '0');
+
+      if (secProgress) {
+        secProgress.style.width = `${((60 - seconds) / 60) * 100}%`;
+      }
+
+      statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Räknar ner`;
+      statusChip.className = "px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1";
+
+      // Arbetsdagar
+      let workdays = 0;
+      let cur = new Date();
+      const end = new Date(appData.targetDate);
+      while (cur < end) {
+        const dayOfWeek = cur.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) workdays++;
+        cur.setDate(cur.getDate() + 1);
+      }
+      document.getElementById('count-workdays').textContent = `${workdays} arbetsdagar kvar`;
+      document.getElementById('count-sleeps').textContent = `${days} nätter kvar att sova`;
+    }
 
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -1862,13 +1942,20 @@ function deleteTrip(tripId, e) {
         const dest = document.getElementById('input-trip-title').value.trim();
         const datePart = document.getElementById('input-trip-date').value;
         const timePart = document.getElementById('input-trip-time').value;
+        const endDatePart = document.getElementById('input-trip-end-date').value;
+        const endTimePart = document.getElementById('input-trip-end-time').value;
         const chosenTheme = document.getElementById('input-trip-theme').value;
 
         if (!dest || !datePart) return;
 
         const newTarget = new Date(`${datePart}T${timePart || '00:00'}:00`);
+        const newEnd = endDatePart 
+          ? new Date(`${endDatePart}T${endTimePart || '23:59'}:00`) 
+          : new Date(newTarget.getTime() + 7 * 24 * 60 * 60 * 1000);
+
         appData.destination = dest;
         appData.targetDate = newTarget.toISOString();
+        appData.endDate = newEnd.toISOString(); // NYTT: Sparar slutdatum
         appData.theme = chosenTheme;
 
         saveState();
