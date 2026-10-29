@@ -1,12 +1,1 @@
-{
-  "background_color": "#ffffff",
-  "dir": "ltr",
-  "display": "standalone",
-  "name": "semesterresan",
-  "orientation": "any",
-  "scope": "/",
-  "short_name": "semesterresan",
-  "start_url": "/",
-  "theme_color": "#ffffff",
-  "description": "Planera din semester"
-}
+
