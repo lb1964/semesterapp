@@ -826,10 +826,10 @@
         budget: 15000,
         expenses: [],
         checklist: [
-          { id: 1, text: 'Pass & ID-kort', packed: false },
-          { id: 2, text: 'Mobil & Laddare', packed: false },
-          { id: 3, text: 'Solglasögon', packed: false },
-          { id: 4, text: 'Badkläder', packed: false }
+          { id: 1, text: 'Pass & ID-kort', category: 'documents', packed: false },
+          { id: 2, text: 'Mobil & Laddare', category: 'tech', packed: false },
+          { id: 3, text: 'Solglasögon', category: 'clothes', packed: false },
+          { id: 4, text: 'Badkläder', category: 'clothes', packed: false }
         ],
         notes: {
           flightNo: '',
@@ -954,7 +954,14 @@ const travelTips = [
     };
 
     let activeFilter = 'alla';
-
+// Kategoridefinitioner för packlistan
+    const packCategories = {
+      clothes: { name: 'Kläder & Skor', icon: 'checkroom', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+      hygiene: { name: 'Hygien & Apotek', icon: 'medical_services', color: 'text-rose-600', bg: 'bg-rose-50' },
+      documents: { name: 'Dokument & Biljetter', icon: 'badge', color: 'text-amber-600', bg: 'bg-amber-50' },
+      tech: { name: 'Elektronik & Prylar', icon: 'devices', color: 'text-cyan-600', bg: 'bg-cyan-50' },
+      other: { name: 'Övrigt & Nöje', icon: 'beach_access', color: 'text-emerald-600', bg: 'bg-emerald-50' }
+    };
 
 // --- VÄDERFUNKTIONER (Open-Meteo) ---
     // Tolkar WMO Weather Codes till svensk text och ikoner
@@ -1712,30 +1719,39 @@ function updateCountdown() {
       renderChecklist();
     }
 
-    function addPresetPackItems() {
+function addPresetPackItems() {
       const presets = [
-        'Tandborste & Tandkräm',
-        'Solglasögon',
-        'Pass & Biljetter',
-        'Laddare till mobil',
-        'Badkläder',
-        'Skavsårsplåster & Medicin',
-        'Hörlurar'
+        { text: 'Pass & Biljetter', category: 'documents' },
+        { text: 'Betalkort & Plånbok', category: 'documents' },
+        { text: 'EU-sjukvårdskort', category: 'documents' },
+        { text: 'Tandborste & Tandkräm', category: 'hygiene' },
+        { text: 'Solkräm & After Sun', category: 'hygiene' },
+        { text: 'Skavsårsplåster & Värkmedicin', category: 'hygiene' },
+        { text: 'Underkläder & Strumpor', category: 'clothes' },
+        { text: 'Badkläder & Strandhandduk', category: 'clothes' },
+        { text: 'Solglasögon & Keps', category: 'clothes' },
+        { text: 'Mobilladdare & Powerbank', category: 'tech' },
+        { text: 'Hörlurar & Reseadapter', category: 'tech' },
+        { text: 'Bok eller Korsord', category: 'other' }
       ];
+
       let added = 0;
       presets.forEach(p => {
-        if (!appData.checklist.some(item => item.text.toLowerCase() === p.toLowerCase())) {
+        // Kontrollera om saken redan finns i listan (oavsett stora/små bokstäver)
+        if (!appData.checklist.some(item => item.text.toLowerCase() === p.text.toLowerCase())) {
           appData.checklist.push({
             id: Date.now() + Math.floor(Math.random() * 1000),
-            text: p,
+            text: p.text,
+            category: p.category, // Sparar rätt kategori
             packed: false
           });
           added++;
         }
       });
+
       saveState();
       renderChecklist();
-      showToast(`${added} semesterföremål lades till i listan!`);
+      showToast(`${added} föremål fördelade på kategorier lades till!`);
     }
 
     // --- THEME APPLICATION ---
