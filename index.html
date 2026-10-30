@@ -1700,20 +1700,6 @@ function toggleItemPacked(id) {
       const item = appData.checklist.find(i => i.id === id);
       if (item) {
         item.packed = !item.packed;
-
-        // Kontrollera om alla saker i just denna kategori nu är packade
-        const categoryKey = item.category || 'other';
-        const allItemsInCat = appData.checklist.filter(i => (i.category || 'other') === categoryKey);
-        const isCatCompleted = allItemsInCat.length > 0 && allItemsInCat.every(i => i.packed);
-
-        if (isCatCompleted) {
-          // Fäll ihop kategorin automatiskt när sista saken bockas i
-          collapsedCategories.add(categoryKey);
-        } else if (!item.packed) {
-          // Fäll ut kategorin igen om man bockar ur en sak så man ser vad som saknas
-          collapsedCategories.delete(categoryKey);
-        }
-
         saveState();
         renderChecklist();
 
