@@ -1632,44 +1632,86 @@ function updateCountdown() {
       document.getElementById('count-sleeps').textContent = `${days} nätter kvar att sova`;
     }
 
-    // --- CHECKLIST LOGIC ---
+// --- CHECKLIST LOGIC (KATEGORISERAD) ---
     function renderChecklist() {
       const listEl = document.getElementById('checklist-items');
       const emptyEl = document.getElementById('checklist-empty');
       listEl.innerHTML = '';
 
+      // 1. Bakåtkompatibilitet: Se till att äldre sparade saker utan kategori får 'other'
+      appData.checklist.forEach(item => {
+        if (!item.category || !packCategories[item.category]) {
+          item.category = 'other';
+        }
+      });
+
+      // 2. Applicera filter ("Alla", "Ej packat", "Packat")
       let filtered = appData.checklist;
       if (activeFilter === 'kvar') filtered = appData.checklist.filter(i => !i.packed);
       if (activeFilter === 'klara') filtered = appData.checklist.filter(i => i.packed);
 
       if (filtered.length === 0) {
         emptyEl.classList.remove('hidden');
+        updatePackingProgress();
+        return;
       } else {
         emptyEl.classList.add('hidden');
       }
 
-      filtered.forEach(item => {
-        const li = document.createElement('li');
-        li.className = `flex items-center justify-between p-3 rounded-2xl border transition-all ${
-          item.packed 
-            ? 'bg-emerald-50/70 border-emerald-200 text-slate-500' 
-            : 'bg-white border-slate-200 text-slate-800 shadow-sm'
-        }`;
+      // 3. Rendera varje kategori som ett eget kort med rubrik och mätare
+      const categoryKeys = Object.keys(packCategories);
 
-        li.innerHTML = `
-          <div class="flex items-center gap-3 flex-1 cursor-pointer select-none" onclick="toggleItemPacked(${item.id})">
-            <div class="w-6 h-6 rounded-lg flex items-center justify-center transition ${
-              item.packed ? 'bg-emerald-600 text-white' : 'border-2 border-slate-300'
-            }">
-              ${item.packed ? '<span class="material-symbols-rounded text-base">check</span>' : ''}
+      categoryKeys.forEach(catKey => {
+        const itemsInCat = filtered.filter(i => i.category === catKey);
+        if (itemsInCat.length === 0) return; // Dölj kategorin om den inte har några matchande saker i aktuellt filter
+
+        const allItemsInCat = appData.checklist.filter(i => i.category === catKey);
+        const packedInCat = allItemsInCat.filter(i => i.packed).length;
+        const totalInCat = allItemsInCat.length;
+        const catPercent = totalInCat > 0 ? Math.round((packedInCat / totalInCat) * 100) : 0;
+        const catMeta = packCategories[catKey];
+
+        const catCard = document.createElement('li');
+        catCard.className = 'bg-white/80 rounded-2xl p-3 border border-white shadow-sm space-y-2.5 mb-2 list-none';
+
+        catCard.innerHTML = `
+          <!-- Kategori-rubrik med delräknare -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <div class="w-6 h-6 rounded-lg ${catMeta.bg} ${catMeta.color} flex items-center justify-center">
+                <span class="material-symbols-rounded text-sm">${catMeta.icon}</span>
+              </div>
+              <span class="text-xs font-bold text-slate-800">${catMeta.name}</span>
             </div>
-            <span class="text-xs font-semibold ${item.packed ? 'line-through text-slate-400' : ''}">${escapeHtml(item.text)}</span>
+            <span class="text-[11px] font-bold ${packedInCat === totalInCat ? 'text-emerald-600' : 'text-slate-500'}">
+              ${packedInCat}/${totalInCat} (${catPercent}%)
+            </span>
           </div>
-          <button onclick="deletePackItem(${item.id})" class="text-slate-400 hover:text-rose-500 p-1.5 transition rounded-xl">
-            <span class="material-symbols-rounded text-base">delete</span>
-          </button>
+
+          <!-- Kategori progress bar -->
+          <div class="w-full bg-slate-200/70 rounded-full h-1.5 overflow-hidden">
+            <div class="${packedInCat === totalInCat ? 'bg-emerald-500' : 'bg-cyan-600'} h-full rounded-full transition-all duration-300" style="width: ${catPercent}%"></div>
+          </div>
+
+          <!-- Föremål i denna kategori -->
+          <div class="space-y-1.5 pt-1">
+            ${itemsInCat.map(item => `
+              <div class="flex items-center justify-between p-2 rounded-xl transition ${item.packed ? 'bg-emerald-50/70 text-slate-400' : 'bg-slate-50/80 text-slate-800 hover:bg-slate-100'}">
+                <div class="flex items-center gap-2.5 flex-1 cursor-pointer select-none" onclick="toggleItemPacked(${item.id})">
+                  <div class="w-5 h-5 rounded-md flex items-center justify-center transition ${item.packed ? 'bg-emerald-600 text-white' : 'border border-slate-300 bg-white'}">
+                    ${item.packed ? '<span class="material-symbols-rounded text-sm leading-none">check</span>' : ''}
+                  </div>
+                  <span class="text-xs font-medium ${item.packed ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeHtml(item.text)}</span>
+                </div>
+                <button onclick="deletePackItem(${item.id})" class="text-slate-400 hover:text-rose-500 p-1 transition rounded-lg">
+                  <span class="material-symbols-rounded text-sm">delete</span>
+                </button>
+              </div>
+            `).join('')}
+          </div>
         `;
-        listEl.appendChild(li);
+
+        listEl.appendChild(catCard);
       });
 
       updatePackingProgress();
