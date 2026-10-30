@@ -382,9 +382,12 @@
 
             <!-- Packing Category Quick Filter -->
             <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px] no-scrollbar">
-              <button onclick="filterPacking('alla')" class="pack-filter active px-3 py-1 rounded-full bg-cyan-700 text-white font-semibold">Alla</button>
-              <button onclick="filterPacking('kvar')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium">Ej packat</button>
-              <button onclick="filterPacking('klara')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium">Packat</button>
+              <button onclick="filterPacking('alla')" class="pack-filter active px-3 py-1 rounded-full bg-cyan-700 text-white font-semibold shrink-0">Alla</button>
+              <button onclick="filterPacking('kvar')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium shrink-0">Ej packat</button>
+              <button onclick="filterPacking('carryon')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium shrink-0">🎒 Handbagage</button>
+              <button onclick="filterPacking('luggage')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium shrink-0">🧳 Resväska</button>
+              <button onclick="filterPacking('morning')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium shrink-0">⏰ Morgon</button>
+              <button onclick="filterPacking('klara')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium shrink-0">Packat</button>
             </div>
 
             <!-- Checklist container -->
@@ -1640,17 +1643,15 @@ function updateCountdown() {
         }
       });
 
-      // Filter: "Alla", "Ej packat", "Packat"
+// Filter: status eller specifik väska/tagg
       let filtered = appData.checklist;
-      if (activeFilter === 'kvar') filtered = appData.checklist.filter(i => !i.packed);
-      if (activeFilter === 'klara') filtered = appData.checklist.filter(i => i.packed);
-
-      if (filtered.length === 0) {
-        emptyEl.classList.remove('hidden');
-        updatePackingProgress();
-        return;
-      } else {
-        emptyEl.classList.add('hidden');
+      if (activeFilter === 'kvar') {
+        filtered = appData.checklist.filter(i => !i.packed);
+      } else if (activeFilter === 'klara') {
+        filtered = appData.checklist.filter(i => i.packed);
+      } else if (activeFilter !== 'alla') {
+        // Filtrera på matchande tagg (carryon, luggage, morning)
+        filtered = appData.checklist.filter(i => (i.category || 'other') === activeFilter);
       }
 
       // Rendera varje sak i en rak lista
