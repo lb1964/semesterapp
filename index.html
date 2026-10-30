@@ -1983,13 +1983,13 @@ function addPresetPackItems() {
         renderBudget();
       });
 
-// Add item to packing list med kategori
+// Add item to packing list med snabbtagg
       document.getElementById('form-add-item').addEventListener('submit', (e) => {
         e.preventDefault();
         const input = document.getElementById('input-new-item');
         const catSelect = document.getElementById('input-item-category');
         const text = input.value.trim();
-        const category = catSelect ? catSelect.value : 'other';
+        const category = catSelect ? catSelect.value : 'carryon';
 
         if (text) {
           appData.checklist.unshift({
