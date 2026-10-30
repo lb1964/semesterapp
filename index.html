@@ -1633,6 +1633,17 @@ function updateCountdown() {
     }
 
 // --- CHECKLIST LOGIC (KATEGORISERAD) ---
+    // Håller koll på vilka kategorier som är hopfällda (t.ex. 'clothes', 'tech')
+    let collapsedCategories = new Set();
+
+    function toggleCategoryCollapse(catKey) {
+      if (collapsedCategories.has(catKey)) {
+        collapsedCategories.delete(catKey);
+      } else {
+        collapsedCategories.add(catKey);
+      }
+      renderChecklist();
+    }
     function renderChecklist() {
       const listEl = document.getElementById('checklist-items');
       const emptyEl = document.getElementById('checklist-empty');
