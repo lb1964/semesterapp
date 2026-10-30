@@ -1627,31 +1627,20 @@ function updateCountdown() {
       document.getElementById('count-sleeps').textContent = `${days} nätter kvar att sova`;
     }
 
-// --- CHECKLIST LOGIC (KATEGORISERAD & KOLLAPSBAR) ---
-    let collapsedCategories = new Set();
-
-    function toggleCategoryCollapse(catKey) {
-      if (collapsedCategories.has(catKey)) {
-        collapsedCategories.delete(catKey);
-      } else {
-        collapsedCategories.add(catKey);
-      }
-      renderChecklist();
-    }
-
+// --- CHECKLIST LOGIC (PLATT LISTA MED TAGGAR) ---
     function renderChecklist() {
       const listEl = document.getElementById('checklist-items');
       const emptyEl = document.getElementById('checklist-empty');
       listEl.innerHTML = '';
 
-      // 1. Bakåtkompatibilitet för äldre föremål utan kategori
+      // Bakåtkompatibilitet för äldre sparade saker
       appData.checklist.forEach(item => {
         if (!item.category || !packCategories[item.category]) {
           item.category = 'other';
         }
       });
 
-      // 2. Applicera filter ("Alla", "Ej packat", "Packat")
+      // Filter: "Alla", "Ej packat", "Packat"
       let filtered = appData.checklist;
       if (activeFilter === 'kvar') filtered = appData.checklist.filter(i => !i.packed);
       if (activeFilter === 'klara') filtered = appData.checklist.filter(i => i.packed);
@@ -1664,68 +1653,44 @@ function updateCountdown() {
         emptyEl.classList.add('hidden');
       }
 
-      // 3. Rendera varje kategori som ett kort med kollapsfunktion
-      const categoryKeys = Object.keys(packCategories);
+      // Rendera varje sak i en rak lista
+      filtered.forEach(item => {
+        const catMeta = packCategories[item.category] || packCategories.other;
 
-      categoryKeys.forEach(catKey => {
-        const itemsInCat = filtered.filter(i => i.category === catKey);
-        if (itemsInCat.length === 0) return; // Dölj tomma kategorier i aktuellt filter
+        const li = document.createElement('li');
+        li.className = `flex items-center justify-between p-2.5 sm:p-3 rounded-2xl border transition-all ${
+          item.packed 
+            ? 'bg-emerald-50/70 border-emerald-200 text-slate-400' 
+            : 'bg-white border-slate-200/90 text-slate-800 shadow-sm'
+        }`;
 
-        const allItemsInCat = appData.checklist.filter(i => i.category === catKey);
-        const packedInCat = allItemsInCat.filter(i => i.packed).length;
-        const totalInCat = allItemsInCat.length;
-        const catPercent = totalInCat > 0 ? Math.round((packedInCat / totalInCat) * 100) : 0;
-        const catMeta = packCategories[catKey];
-        const isCollapsed = collapsedCategories.has(catKey);
-
-        const catCard = document.createElement('li');
-        catCard.className = 'bg-white/80 rounded-2xl p-3 border border-white shadow-sm space-y-2 mb-2 list-none transition-all';
-
-        catCard.innerHTML = `
-          <!-- Klickbar kategori-header -->
-          <div onclick="toggleCategoryCollapse('${catKey}')" class="flex items-center justify-between cursor-pointer select-none group">
-            <div class="flex items-center gap-1.5">
-              <div class="w-6 h-6 rounded-lg ${catMeta.bg} ${catMeta.color} flex items-center justify-center">
-                <span class="material-symbols-rounded text-sm">${catMeta.icon}</span>
-              </div>
-              <span class="text-xs font-bold text-slate-800">${catMeta.name}</span>
+        li.innerHTML = `
+          <div class="flex items-center gap-2.5 flex-1 cursor-pointer select-none min-w-0" onclick="toggleItemPacked(${item.id})">
+            <!-- Kryssruta -->
+            <div class="w-5 h-5 rounded-lg flex items-center justify-center shrink-0 transition ${
+              item.packed ? 'bg-emerald-600 text-white' : 'border-2 border-slate-300 bg-slate-50'
+            }">
+              ${item.packed ? '<span class="material-symbols-rounded text-sm leading-none">check</span>' : ''}
             </div>
-            
-            <div class="flex items-center gap-2">
-              <span class="text-[11px] font-bold ${packedInCat === totalInCat ? 'text-emerald-600' : 'text-slate-500'}">
-                ${packedInCat}/${totalInCat} (${catPercent}%)
-              </span>
-              <!-- Roterande pil -->
-              <span class="material-symbols-rounded text-base text-slate-400 group-hover:text-slate-700 transition-transform duration-200 ${isCollapsed ? '-rotate-90' : 'rotate-0'}">
-                expand_more
-              </span>
-            </div>
+
+            <!-- Föremålstext -->
+            <span class="text-xs font-semibold truncate ${item.packed ? 'line-through text-slate-400 font-normal' : 'text-slate-800'}">
+              ${escapeHtml(item.text)}
+            </span>
+
+            <!-- Tagg -->
+            <span class="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0 ${catMeta.color} ${item.packed ? 'opacity-50' : ''}">
+              ${catMeta.name}
+            </span>
           </div>
 
-          <!-- Kategori progress bar -->
-          <div class="w-full bg-slate-200/70 rounded-full h-1.5 overflow-hidden">
-            <div class="${packedInCat === totalInCat ? 'bg-emerald-500' : 'bg-cyan-600'} h-full rounded-full transition-all duration-300" style="width: ${catPercent}%"></div>
-          </div>
-
-          <!-- Föremålslista (döljs när kategorin är hopfälld) -->
-          <div class="space-y-1.5 pt-1 ${isCollapsed ? 'hidden' : 'block'}">
-            ${itemsInCat.map(item => `
-              <div class="flex items-center justify-between p-2 rounded-xl transition ${item.packed ? 'bg-emerald-50/70 text-slate-400' : 'bg-slate-50/80 text-slate-800 hover:bg-slate-100'}">
-                <div class="flex items-center gap-2.5 flex-1 cursor-pointer select-none" onclick="toggleItemPacked(${item.id})">
-                  <div class="w-5 h-5 rounded-md flex items-center justify-center transition ${item.packed ? 'bg-emerald-600 text-white' : 'border border-slate-300 bg-white'}">
-                    ${item.packed ? '<span class="material-symbols-rounded text-sm leading-none">check</span>' : ''}
-                  </div>
-                  <span class="text-xs font-medium ${item.packed ? 'line-through text-slate-400' : 'text-slate-800'}">${escapeHtml(item.text)}</span>
-                </div>
-                <button onclick="deletePackItem(${item.id})" class="text-slate-400 hover:text-rose-500 p-1 transition rounded-lg">
-                  <span class="material-symbols-rounded text-sm">delete</span>
-                </button>
-              </div>
-            `).join('')}
-          </div>
+          <!-- Ta bort-knapp -->
+          <button onclick="deletePackItem(${item.id})" class="text-slate-400 hover:text-rose-500 p-1.5 transition rounded-xl shrink-0">
+            <span class="material-symbols-rounded text-base">delete</span>
+          </button>
         `;
 
-        listEl.appendChild(catCard);
+        listEl.appendChild(li);
       });
 
       updatePackingProgress();
