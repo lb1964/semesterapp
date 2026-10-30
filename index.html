@@ -1510,7 +1510,6 @@ function deleteTrip(tripId, e) {
       document.getElementById('input-trip-end-date').value = endDate.toISOString().split('T')[0];
       document.getElementById('input-trip-end-time').value = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
 
-      document.getElementById('input-trip-theme').value = appData.theme;
       // Fill Notes section
       document.getElementById('info-flight-no').value = appData.notes.flightNo || '';
       document.getElementById('info-gate').value = appData.notes.gate || '';
@@ -1962,15 +1961,19 @@ function addPresetPackItems() {
         renderBudget();
       });
 
-      // Add item to packing list
+// Add item to packing list med kategori
       document.getElementById('form-add-item').addEventListener('submit', (e) => {
         e.preventDefault();
         const input = document.getElementById('input-new-item');
+        const catSelect = document.getElementById('input-item-category');
         const text = input.value.trim();
+        const category = catSelect ? catSelect.value : 'other';
+
         if (text) {
           appData.checklist.unshift({
             id: Date.now(),
             text: text,
+            category: category,
             packed: false
           });
           saveState();
