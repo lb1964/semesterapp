@@ -364,14 +364,24 @@
               </div>
             </div>
 
-            <!-- Add Item Form -->
-            <form id="form-add-item" class="flex gap-2 mb-3">
-              <div class="relative flex-1">
-                <input type="text" id="input-new-item" placeholder="Lägg till sak (t.ex. Solglasögon)..." class="w-full px-4 py-2.5 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-800 shadow-sm">
+        <!-- Add Item Form med kategoriväljare -->
+            <form id="form-add-item" class="flex flex-col gap-2 mb-3">
+              <div class="flex gap-2">
+                <input type="text" id="input-new-item" required placeholder="Lägg till sak (t.ex. Badlakan)..." class="flex-1 px-4 py-2.5 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-800 shadow-sm">
+                <button type="submit" class="bg-cyan-700 active:bg-cyan-800 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center justify-center shadow-md transition active:scale-95">
+                  <span class="material-symbols-rounded text-base">add</span>
+                </button>
               </div>
-              <button type="submit" class="bg-cyan-700 active:bg-cyan-800 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center justify-center shadow-md">
-                <span class="material-symbols-rounded text-base">add</span>
-              </button>
+              <div class="flex items-center gap-1.5 px-1">
+                <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Kategori:</span>
+                <select id="input-item-category" class="text-xs font-semibold bg-white/90 border border-slate-200 rounded-xl px-2.5 py-1 text-slate-700 focus:outline-none focus:ring-1 focus:ring-cyan-600 shadow-sm">
+                  <option value="clothes">👕 Kläder & Skor</option>
+                  <option value="hygiene">🧴 Hygien & Apotek</option>
+                  <option value="documents">🛂 Dokument & Pengar</option>
+                  <option value="tech">🔌 Elektronik & Prylar</option>
+                  <option value="other">🎒 Övrigt & Nöje</option>
+                </select>
+              </div>
             </form>
 
             <!-- Packing Category Quick Filter -->
