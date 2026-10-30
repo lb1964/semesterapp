@@ -2022,6 +2022,7 @@ function addPresetPackItems() {
           renderChecklist();
           input.value = '';
           showToast(`Lade till "${text}"`);
+          if (catSelect) catSelect.value = 'clothes';
         }
       });
     }
