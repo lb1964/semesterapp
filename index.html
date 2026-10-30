@@ -380,14 +380,28 @@
               </button>
             </form>
 
-            <!-- Packing Category Quick Filter -->
-            <div class="flex gap-1.5 overflow-x-auto pb-1 text-[11px] no-scrollbar">
-              <button onclick="filterPacking('alla')" class="pack-filter active px-3 py-1 rounded-full bg-cyan-700 text-white font-semibold shrink-0">Alla</button>
-              <button onclick="filterPacking('kvar')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium shrink-0">Ej packat</button>
-              <button onclick="filterPacking('carryon')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium shrink-0">🎒 Handbagage</button>
-              <button onclick="filterPacking('luggage')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium shrink-0">🧳 Resväska</button>
-              <button onclick="filterPacking('morning')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium shrink-0">⏰ Morgon</button>
-              <button onclick="filterPacking('klara')" class="pack-filter px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium shrink-0">Packat</button>
+           <!-- Tvådelad filter- och åtgärdssektion -->
+            <div class="space-y-1.5 mb-2">
+              <!-- Rad 1: Statusfilter & Rensa-knapp -->
+              <div class="flex items-center justify-between gap-1.5 text-[11px]">
+                <div class="flex items-center gap-1">
+                  <button onclick="filterPacking('alla')" class="pack-filter active px-2.5 py-1 rounded-xl bg-cyan-700 text-white font-semibold transition">Alla</button>
+                  <button onclick="filterPacking('kvar')" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition">Kvar</button>
+                  <button onclick="filterPacking('klara')" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition">Packat</button>
+                </div>
+                
+                <!-- Rensa packade-knapp -->
+                <button id="btn-clear-packed" onclick="clearPackedItems()" title="Ta bort avbockade saker" class="hidden px-2.5 py-1 rounded-xl text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 font-semibold items-center gap-1 transition active:scale-95">
+                  <span class="material-symbols-rounded text-xs">delete_sweep</span> Rensa klara
+                </button>
+              </div>
+
+              <!-- Rad 2: Snabbtaggar / Väskor -->
+              <div class="flex items-center gap-1 text-[10px] overflow-x-auto pb-0.5 no-scrollbar">
+                <button onclick="filterPacking('carryon')" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 shrink-0 transition">🎒 Handbagage</button>
+                <button onclick="filterPacking('luggage')" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 shrink-0 transition">🧳 Resväska</button>
+                <button onclick="filterPacking('morning')" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 shrink-0 transition">⏰ Morgon</button>
+              </div>
             </div>
 
             <!-- Checklist container -->
@@ -1718,6 +1732,18 @@ function toggleItemPacked(id) {
       renderChecklist();
     }
 
+    function clearPackedItems() {
+      const packedCount = appData.checklist.filter(i => i.packed).length;
+      if (packedCount === 0) return;
+
+      if (confirm(`Vill du ta bort alla ${packedCount} packade saker från listan?`)) {
+        appData.checklist = appData.checklist.filter(i => !i.packed);
+        saveState();
+        renderChecklist();
+        showToast(`Tog bort ${packedCount} packade föremål.`);
+      }
+    }
+
     function updatePackingProgress() {
       const total = appData.checklist.length;
       const packedCount = appData.checklist.filter(i => i.packed).length;
@@ -1729,6 +1755,18 @@ function toggleItemPacked(id) {
       document.getElementById('full-packing-bar').style.width = `${percent}%`;
       document.getElementById('pack-percent').textContent = `${percent}%`;
       document.getElementById('packing-full-counter').textContent = `${packedCount} av ${total} saker packade i resväskan`;
+
+      // Visa "Rensa klara" enbart om det faktiskt finns något packat
+      const clearBtn = document.getElementById('btn-clear-packed');
+      if (clearBtn) {
+        if (packedCount > 0) {
+          clearBtn.classList.remove('hidden');
+          clearBtn.classList.add('inline-flex');
+        } else {
+          clearBtn.classList.add('hidden');
+          clearBtn.classList.remove('inline-flex');
+        }
+      }
     }
 
     function filterPacking(type) {
