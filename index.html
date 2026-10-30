@@ -364,24 +364,20 @@
               </div>
             </div>
 
-        <!-- Add Item Form med kategoriväljare -->
-            <form id="form-add-item" class="flex flex-col gap-2 mb-3">
-              <div class="flex gap-2">
-                <input type="text" id="input-new-item" required placeholder="Lägg till sak (t.ex. Badlakan)..." class="flex-1 px-4 py-2.5 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-800 shadow-sm">
-                <button type="submit" class="bg-cyan-700 active:bg-cyan-800 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center justify-center shadow-md transition active:scale-95">
-                  <span class="material-symbols-rounded text-base">add</span>
-                </button>
-              </div>
-              <div class="flex items-center gap-1.5 px-1">
-                <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Kategori:</span>
-                <select id="input-item-category" class="text-xs font-semibold bg-white/90 border border-slate-200 rounded-xl px-2.5 py-1 text-slate-700 focus:outline-none focus:ring-1 focus:ring-cyan-600 shadow-sm">
-                  <option value="clothes">👕 Kläder & Skor</option>
-                  <option value="hygiene">🧴 Hygien & Apotek</option>
-                  <option value="documents">🛂 Dokument & Pengar</option>
-                  <option value="tech">🔌 Elektronik & Prylar</option>
-                  <option value="other">🎒 Övrigt & Nöje</option>
-                </select>
-              </div>
+<!-- Add Item Form med snabbtagg (Modell 3) -->
+            <form id="form-add-item" class="flex gap-2 mb-3">
+              <input type="text" id="input-new-item" required placeholder="Lägg till sak (t.ex. Pass, Solglasögon)..." class="flex-1 px-3.5 py-2.5 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-800 shadow-sm">
+              
+              <select id="input-item-category" class="text-xs font-semibold bg-white border border-slate-200 rounded-2xl px-2.5 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-600 shadow-sm">
+                <option value="carryon">Handbagage</option>
+                <option value="luggage">Resväska</option>
+                <option value="morning">Sista morgonen</option>
+                <option value="other">Övrigt</option>
+              </select>
+
+              <button type="submit" class="bg-cyan-700 active:bg-cyan-800 text-white px-3.5 py-2 rounded-2xl text-xs font-bold flex items-center justify-center shadow-md transition active:scale-95">
+                <span class="material-symbols-rounded text-base">add</span>
+              </button>
             </form>
 
             <!-- Packing Category Quick Filter -->
@@ -826,10 +822,10 @@
         budget: 15000,
         expenses: [],
         checklist: [
-          { id: 1, text: 'Pass & ID-kort', category: 'documents', packed: false },
-          { id: 2, text: 'Mobil & Laddare', category: 'tech', packed: false },
-          { id: 3, text: 'Solglasögon', category: 'clothes', packed: false },
-          { id: 4, text: 'Badkläder', category: 'clothes', packed: false }
+          { id: 1, text: 'Pass & Plånbok', category: 'carryon', packed: false },
+          { id: 2, text: 'Tandborste & Necessär', category: 'morning', packed: false },
+          { id: 3, text: 'Mobil & Laddare', category: 'morning', packed: false },
+          { id: 4, text: 'Badkläder & Kläder', category: 'luggage', packed: false }
         ],
         notes: {
           flightNo: '',
@@ -954,13 +950,12 @@ const travelTips = [
     };
 
     let activeFilter = 'alla';
-// Kategoridefinitioner för packlistan
+// Praktiska taggar för den platta packlistan
     const packCategories = {
-      clothes: { name: 'Kläder & Skor', icon: 'checkroom', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-      hygiene: { name: 'Hygien & Apotek', icon: 'medical_services', color: 'text-rose-600', bg: 'bg-rose-50' },
-      documents: { name: 'Dokument & Biljetter', icon: 'badge', color: 'text-amber-600', bg: 'bg-amber-50' },
-      tech: { name: 'Elektronik & Prylar', icon: 'devices', color: 'text-cyan-600', bg: 'bg-cyan-50' },
-      other: { name: 'Övrigt & Nöje', icon: 'beach_access', color: 'text-emerald-600', bg: 'bg-emerald-50' }
+      carryon: { name: 'Handbagage', color: 'text-cyan-800 bg-cyan-100/70 border-cyan-200' },
+      luggage: { name: 'Resväska', color: 'text-indigo-800 bg-indigo-100/70 border-indigo-200' },
+      morning: { name: 'Sista morgonen', color: 'text-amber-800 bg-amber-100/70 border-amber-200' },
+      other: { name: 'Övrigt', color: 'text-slate-700 bg-slate-100 border-slate-200' }
     };
 
 // --- VÄDERFUNKTIONER (Open-Meteo) ---
@@ -1797,28 +1792,27 @@ function toggleItemPacked(id) {
 
 function addPresetPackItems() {
       const presets = [
-        { text: 'Pass & Biljetter', category: 'documents' },
-        { text: 'Betalkort & Plånbok', category: 'documents' },
-        { text: 'EU-sjukvårdskort', category: 'documents' },
-        { text: 'Tandborste & Tandkräm', category: 'hygiene' },
-        { text: 'Solkräm & After Sun', category: 'hygiene' },
-        { text: 'Skavsårsplåster & Värkmedicin', category: 'hygiene' },
-        { text: 'Underkläder & Strumpor', category: 'clothes' },
-        { text: 'Badkläder & Strandhandduk', category: 'clothes' },
-        { text: 'Solglasögon & Keps', category: 'clothes' },
-        { text: 'Mobilladdare & Powerbank', category: 'tech' },
-        { text: 'Hörlurar & Reseadapter', category: 'tech' },
-        { text: 'Bok eller Korsord', category: 'other' }
+        { text: 'Pass & Biljetter', category: 'carryon' },
+        { text: 'Plånbok & Betalkort', category: 'carryon' },
+        { text: 'Hörlurar & Powerbank', category: 'carryon' },
+        { text: 'Viktiga mediciner', category: 'carryon' },
+        { text: 'Tandborste & Deo', category: 'morning' },
+        { text: 'Mobilladdare', category: 'morning' },
+        { text: 'Slå av kaffebryggare & låsa', category: 'morning' },
+        { text: 'Underkläder & Strumpor', category: 'luggage' },
+        { text: 'Badkläder & Solglasögon', category: 'luggage' },
+        { text: 'Skor & Ombyten', category: 'luggage' },
+        { text: 'Solkräm & Necessär', category: 'luggage' },
+        { text: 'Reseadapter', category: 'luggage' }
       ];
 
       let added = 0;
       presets.forEach(p => {
-        // Kontrollera om saken redan finns i listan (oavsett stora/små bokstäver)
         if (!appData.checklist.some(item => item.text.toLowerCase() === p.text.toLowerCase())) {
           appData.checklist.push({
             id: Date.now() + Math.floor(Math.random() * 1000),
             text: p.text,
-            category: p.category, // Sparar rätt kategori
+            category: p.category,
             packed: false
           });
           added++;
@@ -1827,7 +1821,7 @@ function addPresetPackItems() {
 
       saveState();
       renderChecklist();
-      showToast(`${added} föremål fördelade på kategorier lades till!`);
+      showToast(`${added} reseföremål lades till i listan!`);
     }
 
     // --- THEME APPLICATION ---
