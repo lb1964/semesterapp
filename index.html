@@ -2039,6 +2039,12 @@
       setupEventListeners();
       startCountdownTimer();
       fetchDestinationWeather();
+
+      // Öppna direkt vald vy om appen startas från en hemskärms-genväg
+      const hash = window.location.hash.replace('#', '');
+      if (['checklist', 'budget', 'notes'].includes(hash)) {
+        switchTab(hash);
+      }
     }
 
     window.onload = init;
