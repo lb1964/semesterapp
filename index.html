@@ -897,16 +897,27 @@
     }
 
     function getActiveTrip() {
-      const found = store.trips.find(t => t.id === store.activeTripId);
-      if (found) return found;
-      if (store.trips.length > 0) {
+      let found = store.trips.find(t => t.id === store.activeTripId);
+      if (!found && store.trips.length > 0) {
         store.activeTripId = store.trips[0].id;
-        return store.trips[0];
+        found = store.trips[0];
       }
-      const newTrip = createEmptyTrip();
-      store.trips.push(newTrip);
-      store.activeTripId = newTrip.id;
-      return newTrip;
+      if (!found) {
+        found = createEmptyTrip();
+        store.trips.push(found);
+        store.activeTripId = found.id;
+      }
+
+      // Punkt 5: Säkerställ att endDate alltid är satt på den aktiva resan
+      if (!found.endDate) {
+        const start = new Date(found.targetDate).getTime();
+        const fallbackEnd = new Date(start + 7 * 24 * 60 * 60 * 1000);
+        fallbackEnd.setHours(22, 0, 0, 0);
+        found.endDate = fallbackEnd.toISOString();
+        saveState();
+      }
+
+      return found;
     }
 
     function saveState() {
@@ -1346,7 +1357,11 @@ function deleteTrip(tripId, e) {
         if (!importedTrip.checklist) importedTrip.checklist = [];
         if (!importedTrip.expenses) importedTrip.expenses = [];
         if (!importedTrip.notes) importedTrip.notes = { flightNo: '', gate: '', hotel: '', bookingRef: '', memo: '' };
-
+        if (!importedTrip.endDate) {
+          const startMs = new Date(importedTrip.targetDate).getTime();
+          importedTrip.endDate = new Date(startMs + 7 * 24 * 60 * 60 * 1000).toISOString();
+        }
+        
         store.trips.push(importedTrip);
         store.activeTripId = importedTrip.id;
         appData = importedTrip;
@@ -2081,6 +2096,18 @@ function addPresetPackItems() {
           if (catSelect) catSelect.value = 'carryon';
         }
       });
+      // Stäng modal när man klickar på den mörka bakgrunden utanför rutan
+      ['modal-edit', 'modal-theme', 'modal-trips'].forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+              closeModal(modalId);
+            }
+          });
+        }
+      });
+    }
     }
     // --- INITIALIZATION ---
 function init() {
