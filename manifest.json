@@ -1,11 +1,16 @@
 {
-  "name": "Semesterresan",
+  "name": "Semester Nedräkning - Semesterklockan",
   "short_name": "Semester",
+  "description": "Nedräkning, packlista, väder och budget för dina semesterresor.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#121316",
+  "orientation": "portrait-primary",
+  "background_color": "#0284c7",
   "theme_color": "#0284c7",
+  "lang": "sv",
+  "dir": "ltr",
+  "categories": ["travel", "lifestyle", "utilities"],
   "icons": [
     {
       "src": "./icon-192.png",
@@ -14,16 +19,50 @@
       "purpose": "any"
     },
     {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
       "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "id": "bjorkholmen",
-  "description": "Planera din resa på ett enkelt sätt",
-  "lang": "sv",
-  "categories": [
-    "travel"
+  "shortcuts": [
+    {
+      "name": "Packlista",
+      "short_name": "Packa",
+      "description": "Gå direkt till packlistan",
+      "url": "./index.html#checklist",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Resebudget",
+      "short_name": "Budget",
+      "description": "Registrera ett utlägg eller se budget",
+      "url": "./index.html#budget",
+      "icons": [
+        {
+          "src": "./icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }
