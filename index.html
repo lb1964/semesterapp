@@ -1661,9 +1661,6 @@ function updateCountdown() {
       statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Räknar ner`;
       statusChip.className = "px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1";
 
-      statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Räknar ner`;
-      statusChip.className = "px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1";
-
       // Beräkna arbetsdagar utan risk för oändlig loop eller dygnsförskjutning
       let workdays = 0;
       let cur = new Date();
@@ -2107,7 +2104,6 @@ function addPresetPackItems() {
           });
         }
       });
-    }
     }
     // --- INITIALIZATION ---
 function init() {
