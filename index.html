@@ -383,12 +383,12 @@
            <!-- Tvådelad filter- och åtgärdssektion -->
             <div class="space-y-1.5 mb-2">
               <!-- Rad 1: Statusfilter & Rensa-knapp -->
-              <div class="flex items-center justify-between gap-1.5 text-[11px]">
-                <div class="flex items-center gap-1">
-                  <button onclick="filterPacking('alla')" class="pack-filter active px-2.5 py-1 rounded-xl bg-cyan-700 text-white font-semibold transition">Alla</button>
-                  <button onclick="filterPacking('kvar')" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition">Kvar</button>
-                  <button onclick="filterPacking('klara')" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition">Packat</button>
-                </div>
+             <div class="flex items-center justify-between gap-1.5 text-[11px]">
+              <div class="flex items-center gap-1">
+                <button onclick="filterPacking('alla', event)" class="pack-filter active px-2.5 py-1 rounded-xl bg-cyan-700 text-white font-semibold transition">Alla</button>
+                <button onclick="filterPacking('kvar', event)" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition">Kvar</button>
+                <button onclick="filterPacking('klara', event)" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition">Packat</button>
+              </div>
                 
                 <!-- Rensa packade-knapp -->
                 <button id="btn-clear-packed" onclick="clearPackedItems()" title="Ta bort avbockade saker" class="hidden px-2.5 py-1 rounded-xl text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 font-semibold items-center gap-1 transition active:scale-95">
@@ -398,9 +398,9 @@
 
               <!-- Rad 2: Snabbtaggar / Väskor -->
               <div class="flex items-center gap-1 text-[10px] overflow-x-auto pb-0.5 no-scrollbar">
-                <button onclick="filterPacking('carryon')" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 shrink-0 transition">🎒 Handbagage</button>
-                <button onclick="filterPacking('luggage')" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 shrink-0 transition">🧳 Resväska</button>
-                <button onclick="filterPacking('morning')" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 shrink-0 transition">⏰ Morgon</button>
+                <button onclick="filterPacking('carryon', event)" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 shrink-0 transition">🎒 Handbagage</button>
+                <button onclick="filterPacking('luggage', event)" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 shrink-0 transition">🧳 Resväska</button>
+                <button onclick="filterPacking('morning', event)" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 shrink-0 transition">⏰ Morgon</button>
               </div>
             </div>
 
@@ -747,6 +747,20 @@
               <span class="theme-check-roadtrip w-2.5 h-2.5 rounded-full bg-amber-600 hidden"></span>
             </span>
           </button>
+          
+          <button onclick="setTheme('cruise')" class="flex items-center justify-between p-3.5 rounded-2xl border border-cyan-200 hover:bg-cyan-50 transition text-left">
+            <span class="flex items-center gap-3">
+              <span class="text-2xl">🚢</span>
+              <span>
+                <strong class="block text-slate-800">Kryssning & Hav</strong>
+                <small class="text-slate-500 font-normal">Öppet hav, salta vindar och lyx</small>
+              </span>
+            </span>
+            <span class="w-4 h-4 rounded-full border border-cyan-600 flex items-center justify-center">
+              <span class="theme-check-cruise w-2.5 h-2.5 rounded-full bg-cyan-600 hidden"></span>
+            </span>
+          </button>
+          
         </div>
       </div>
     </div>
@@ -1632,14 +1646,25 @@ function updateCountdown() {
       statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Räknar ner`;
       statusChip.className = "px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1";
 
+      statusChip.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Räknar ner`;
+      statusChip.className = "px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1";
+
+      // Beräkna arbetsdagar utan risk för oändlig loop eller dygnsförskjutning
       let workdays = 0;
       let cur = new Date();
+      cur.setHours(0, 0, 0, 0);
+
       const end = new Date(appData.targetDate);
+      end.setHours(0, 0, 0, 0);
+
       while (cur < end) {
-        const dayOfWeek = cur.getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) workdays++;
         cur.setDate(cur.getDate() + 1);
+        const dayOfWeek = cur.getDay();
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          workdays++;
+        }
       }
+
       document.getElementById('count-workdays').textContent = `${workdays} arbetsdagar kvar`;
       document.getElementById('count-sleeps').textContent = `${days} nätter kvar att sova`;
     }
@@ -1769,16 +1794,28 @@ function toggleItemPacked(id) {
       }
     }
 
-    function filterPacking(type) {
-      activeFilter = type;
-      document.querySelectorAll('.pack-filter').forEach(btn => {
-        btn.classList.remove('bg-cyan-700', 'text-white');
-        btn.classList.add('bg-slate-100', 'text-slate-700');
-      });
-      event.target.classList.remove('bg-slate-100', 'text-slate-700');
-      event.target.classList.add('bg-cyan-700', 'text-white');
-      renderChecklist();
+function filterPacking(type, ev) {
+  activeFilter = type;
+  document.querySelectorAll('.pack-filter').forEach(btn => {
+    btn.classList.remove('bg-cyan-700', 'text-white');
+    btn.classList.add('bg-slate-100', 'text-slate-700');
+  });
+  
+  if (ev && ev.currentTarget) {
+    ev.currentTarget.classList.remove('bg-slate-100', 'text-slate-700');
+    ev.currentTarget.classList.add('bg-cyan-700', 'text-white');
+  } else {
+    // Fallback om funktionen anropas programmatiskt utan event
+    const activeBtn = Array.from(document.querySelectorAll('.pack-filter'))
+      .find(b => b.getAttribute('onclick')?.includes(`'${type}'`));
+    if (activeBtn) {
+      activeBtn.classList.remove('bg-slate-100', 'text-slate-700');
+      activeBtn.classList.add('bg-cyan-700', 'text-white');
     }
+  }
+
+  renderChecklist();
+}
 
 function addPresetPackItems() {
       const presets = [
@@ -1840,7 +1877,7 @@ function addPresetPackItems() {
       document.getElementById('theme-header-icon').textContent = t.headerIcon;
 
       // Update modal check indicators
-      ['tropical', 'mountains', 'city', 'roadtrip'].forEach(key => {
+      ['tropical', 'mountains', 'city', 'roadtrip', 'cruise'].forEach(key => {
         const dot = document.querySelector(`.theme-check-${key}`);
         if (dot) {
           if (key === themeKey) dot.classList.remove('hidden');
