@@ -17,6 +17,8 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
   <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- QRCode.js för delning -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -159,13 +161,19 @@
           <button onclick="openModal('modal-trips')" class="text-left flex items-center gap-1 group">
             <div>
               <span class="text-[10px] font-semibold tracking-wider uppercase text-white/70 block">Aktiv resa ▾</span>
-              <h1 id="topbar-title" class="text-base font-bold text-white tracking-tight leading-none truncate max-w-[140px] sm:max-w-[170px] group-active:opacity-80">Resa</h1>
+              <h1 id="topbar-title" class="text-base font-bold text-white tracking-tight leading-none truncate max-w-[130px] sm:max-w-[160px] group-active:opacity-80">Resa</h1>
             </div>
           </button>
         </div>
 
         <!-- Action Buttons -->
         <div class="flex items-center gap-1">
+          <!-- Installera som app-knapp (PWA) -->
+          <button id="btn-install-pwa" title="Installera som app" class="hidden h-10 px-3 rounded-full bg-emerald-500/80 hover:bg-emerald-500 active:bg-emerald-600 backdrop-blur-md flex items-center gap-1.5 text-white transition shadow-sm animate-pulse-soft">
+            <span class="material-symbols-rounded text-lg">install_mobile</span>
+            <span class="text-xs font-bold hidden sm:inline">Installera</span>
+          </button>
+
           <button id="btn-theme-modal" title="Välj tema" class="w-10 h-10 rounded-full bg-white/15 active:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition">
             <span class="material-symbols-rounded text-xl">palette</span>
           </button>
@@ -186,10 +194,15 @@
               <span id="theme-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 inline-flex items-center gap-1">
                 <span class="material-symbols-rounded text-sm">beach_access</span> Sol & Bad
               </span>
-              <span id="status-chip" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1">
-                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                Räknar ner
-              </span>
+              <div class="flex items-center gap-1.5">
+                <button onclick="shareCountdownStatus()" title="Dela status" class="w-7 h-7 rounded-full bg-white/60 hover:bg-white text-slate-600 flex items-center justify-center transition">
+                  <span class="material-symbols-rounded text-sm">share</span>
+                </button>
+                <span id="status-chip" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                  Räknar ner
+                </span>
+              </div>
             </div>
 
             <div class="mt-2 text-center">
@@ -342,8 +355,28 @@
                 <h2 class="text-lg font-bold text-slate-900 font-display">Packlista</h2>
                 <p id="packing-full-counter" class="text-xs text-slate-500">Klicka på en sak när den ligger i väskan</p>
               </div>
-              <button onclick="addPresetPackItems()" class="text-xs font-semibold bg-white/90 text-cyan-800 border border-cyan-200 hover:bg-cyan-50 px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1">
-                <span class="material-symbols-rounded text-sm">auto_fix_high</span> Mall
+              <div class="flex items-center gap-1.5">
+                <!-- Nollställ bockar (Snabb-återställning) -->
+                <button onclick="uncheckAllPackItems()" title="Nollställ alla bockar inför ny resa" class="text-xs font-semibold bg-white/90 text-slate-600 border border-slate-200 hover:bg-slate-100 px-2.5 py-1.5 rounded-full transition shadow-sm flex items-center gap-1">
+                  <span class="material-symbols-rounded text-sm">restart_alt</span>
+                  <span class="hidden sm:inline">Nollställ</span>
+                </button>
+                <!-- Öppna mallväljare -->
+                <button onclick="openModal('modal-pack-templates')" class="text-xs font-semibold bg-white/90 text-cyan-800 border border-cyan-200 hover:bg-cyan-50 px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1">
+                  <span class="material-symbols-rounded text-sm">auto_fix_high</span> Mallar
+                </button>
+              </div>
+            </div>
+
+            <!-- Väderkopplad packrekommendation -->
+            <div id="packing-weather-alert" class="hidden mb-3 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-2.5 text-xs">
+              <span class="text-xl">🌧️</span>
+              <div class="flex-1">
+                <strong>Regn väntas på resmålet!</strong>
+                <p class="text-[11px] text-amber-800 leading-snug">Glöm inte att packa paraply, regnjacka eller vattentäta skor.</p>
+              </div>
+              <button onclick="addQuickWeatherPackItem()" class="px-2 py-1 bg-amber-200 hover:bg-amber-300 text-amber-900 rounded-xl font-bold text-[10px] shrink-0">
+                + Lägg till
               </button>
             </div>
 
@@ -407,12 +440,12 @@
           </div>
         </section>
 
-        <!-- Tab 3: TRAVEL NOTES & FLIGHTS -->
+        <!-- Tab 3: TRAVEL NOTES, ITINERARY & FLIGHTS -->
         <section id="view-notes" class="tab-view hidden space-y-3">
           <div class="glass-card rounded-[28px] p-4 text-slate-800 shadow-xl space-y-4">
             <div>
-              <h2 class="text-lg font-bold text-slate-900 font-display">Reseuppgifter & Noteringar</h2>
-              <p class="text-xs text-slate-500">Håll koll på flygnummer, hotell och bokningskoder</p>
+              <h2 class="text-lg font-bold text-slate-900 font-display">Reseuppgifter & Dagsplan</h2>
+              <p class="text-xs text-slate-500">Håll koll på flyg, hotell, kartor och dagsaktiviteter</p>
             </div>
 
             <div class="space-y-3 text-xs">
@@ -436,12 +469,15 @@
                 </div>
               </div>
 
-              <!-- Accommodation Card -->
+              <!-- Accommodation Card med Google Maps-knapp -->
               <div class="bg-white/90 p-3.5 rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
                 <div class="flex justify-between items-center text-slate-600 font-bold">
                   <span class="flex items-center gap-1.5 text-amber-800">
                     <span class="material-symbols-rounded text-base">hotel</span> Boende / Hotell
                   </span>
+                  <button type="button" onclick="openHotelInMaps()" title="Öppna i Google Maps" class="text-[11px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 px-2.5 py-1 rounded-lg flex items-center gap-1 transition">
+                    <span class="material-symbols-rounded text-xs">map</span> Karta
+                  </button>
                 </div>
                 <div>
                   <label class="text-[10px] text-slate-500 font-semibold block">Hotellnamn eller Adress</label>
@@ -458,12 +494,43 @@
                 <label class="text-slate-700 font-bold flex items-center gap-1.5 text-xs">
                   <span class="material-symbols-rounded text-base text-indigo-700">edit_note</span> Egna anteckningar & att göra
                 </label>
-                <textarea id="info-notes" rows="4" placeholder="Skriv ner sevärdheter, hyrbilsdetaljer eller rekommenderade restauranger..." class="w-full text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-600 text-slate-800"></textarea>
+                <textarea id="info-notes" rows="3" placeholder="Skriv ner sevärdheter, hyrbilsdetaljer eller rekommenderade restauranger..." class="w-full text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-600 text-slate-800"></textarea>
               </div>
 
-              <button onclick="saveNotes()" class="w-full py-3 bg-cyan-700 active:bg-cyan-800 text-white rounded-2xl font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition">
-                <span class="material-symbols-rounded text-base">save</span> Spara ändringar
+              <button onclick="saveNotes()" class="w-full py-2.5 bg-cyan-700 active:bg-cyan-800 text-white rounded-2xl font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition">
+                <span class="material-symbols-rounded text-base">save</span> Spara reseuppgifter
               </button>
+
+              <!-- Dagsplanering / Tidslinje (Punkt 4) -->
+              <div class="bg-white/90 p-3.5 rounded-2xl border border-slate-200/80 shadow-sm space-y-3 mt-4">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-800 font-bold flex items-center gap-1.5 text-xs">
+                    <span class="material-symbols-rounded text-base text-teal-700">event_note</span> Dagsplan & Aktiviteter
+                  </span>
+                  <span id="timeline-count" class="text-[10px] text-slate-400">0 inbokade</span>
+                </div>
+
+                <!-- Formulär för ny aktivitet -->
+                <form id="form-add-activity" class="space-y-2 pt-1 border-t border-slate-100">
+                  <div class="grid grid-cols-2 gap-2">
+                    <input type="date" id="input-act-date" required class="text-xs p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
+                    <input type="time" id="input-act-time" class="text-xs p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
+                  </div>
+                  <div class="flex gap-2">
+                    <input type="text" id="input-act-title" required placeholder="Aktivitet/restaurang..." class="flex-1 text-xs p-2 rounded-xl bg-slate-50 border border-slate-200">
+                    <input type="text" id="input-act-location" placeholder="Plats/adress..." class="flex-1 text-xs p-2 rounded-xl bg-slate-50 border border-slate-200">
+                    <button type="submit" class="bg-teal-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center shadow-sm">
+                      <span class="material-symbols-rounded text-base">add</span>
+                    </button>
+                  </div>
+                </form>
+
+                <!-- Aktivitetslista -->
+                <ul id="timeline-list" class="space-y-2 max-h-[220px] overflow-y-auto pr-0.5 pt-1"></ul>
+                <div id="timeline-empty" class="hidden py-4 text-center text-slate-400 text-xs">
+                  Inga aktiviteter inlagda än.
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -745,6 +812,98 @@
       </div>
     </div>
       
+    <!-- PACKLIST-MALLAR MODAL -->
+    <div id="modal-pack-templates" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+      <div class="bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl transform translate-y-10 transition-transform duration-300 max-h-[85vh] overflow-y-auto">
+        <div class="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-4 sm:hidden"></div>
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-base font-bold text-slate-900 font-display flex items-center gap-2">
+            <span class="material-symbols-rounded text-cyan-700">auto_fix_high</span> Välj packlistemall
+          </h3>
+          <button onclick="closeModal('modal-pack-templates')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+            <span class="material-symbols-rounded text-lg">close</span>
+          </button>
+        </div>
+        <p class="text-xs text-slate-500 mb-4">Välj en restyp så läggs relevanta föremål till i din nuvarande packlista.</p>
+
+        <div class="grid grid-cols-1 gap-2.5 text-xs font-medium">
+          <button onclick="applyPresetTheme('tropical')" class="flex items-center justify-between p-3.5 rounded-2xl border border-teal-200 hover:bg-teal-50 transition text-left">
+            <span class="flex items-center gap-3">
+              <span class="text-2xl">🏖️</span>
+              <div>
+                <strong class="block text-slate-900">Sol & Bad / Tropisk resa</strong>
+                <small class="text-slate-500">Badkläder, solskydd, UV-tröja, myggmedel, strandväska</small>
+              </div>
+            </span>
+            <span class="material-symbols-rounded text-slate-400">add_circle</span>
+          </button>
+
+          <button onclick="applyPresetTheme('roadtrip')" class="flex items-center justify-between p-3.5 rounded-2xl border border-amber-200 hover:bg-amber-50 transition text-left">
+            <span class="flex items-center gap-3">
+              <span class="text-2xl">🚐</span>
+              <div>
+                <strong class="block text-slate-900">Husbil & Roadtrip</strong>
+                <small class="text-slate-500">Nivåklossar, CEE-elkabel, grillkol, 12V-laddare, multiverktyg</small>
+              </div>
+            </span>
+            <span class="material-symbols-rounded text-slate-400">add_circle</span>
+          </button>
+
+          <button onclick="applyPresetTheme('city')" class="flex items-center justify-between p-3.5 rounded-2xl border border-purple-200 hover:bg-purple-50 transition text-left">
+            <span class="flex items-center gap-3">
+              <span class="text-2xl">🌆</span>
+              <div>
+                <strong class="block text-slate-900">Storstad & Weekend</strong>
+                <small class="text-slate-500">Sköna promenadskor, paraply, dagsryggsäck, powerbank</small>
+              </div>
+            </span>
+            <span class="material-symbols-rounded text-slate-400">add_circle</span>
+          </button>
+
+          <button onclick="applyPresetTheme('mountains')" class="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200 hover:bg-slate-50 transition text-left">
+            <span class="flex items-center gap-3">
+              <span class="text-2xl">🏔️</span>
+              <div>
+                <strong class="block text-slate-900">Fjäll, Vinter & Natur</strong>
+                <small class="text-slate-500">Underställ, vindtät jacka, termos, skavsårsplåster, mössa</small>
+              </div>
+            </span>
+            <span class="material-symbols-rounded text-slate-400">add_circle</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR & DELNINGS-MODAL -->
+    <div id="modal-qr-share" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
+      <div class="bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl transform translate-y-10 transition-transform duration-300 max-h-[90vh] overflow-y-auto text-center">
+        <div class="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-4 sm:hidden"></div>
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-base font-bold text-slate-900 font-display flex items-center gap-2">
+            <span class="material-symbols-rounded text-cyan-700">qr_code_2</span> Dela resa via länk & QR
+          </h3>
+          <button onclick="closeModal('modal-qr-share')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+            <span class="material-symbols-rounded text-lg">close</span>
+          </button>
+        </div>
+        <p class="text-xs text-slate-500 mb-4">Låt ressällskapet scanna QR-koden med mobilkameran eller dela länken för att direkt importera hela resan.</p>
+
+        <!-- QR-kod behållare -->
+        <div class="flex justify-center my-3 p-4 bg-slate-50 rounded-2xl border border-slate-200 w-fit mx-auto shadow-inner">
+          <div id="qrcode-box" class="bg-white p-2.5 rounded-xl shadow-sm"></div>
+        </div>
+
+        <div class="space-y-2 mt-4 text-xs font-semibold">
+          <button onclick="copyShareableUrl()" class="w-full py-2.5 px-3 bg-cyan-700 hover:bg-cyan-800 text-white rounded-2xl flex items-center justify-center gap-1.5 transition shadow-sm">
+            <span class="material-symbols-rounded text-base">link</span> Kopiera delningslänk
+          </button>
+          <button onclick="shareLinkViaSystem()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl flex items-center justify-center gap-1.5 transition">
+            <span class="material-symbols-rounded text-base">share</span> Skicka via appar
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- MANAGE TRIPS MODAL -->
     <div id="modal-trips" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
       <div class="bg-white w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-6 shadow-2xl transform translate-y-10 transition-transform duration-300 max-h-[85vh] flex flex-col">
@@ -783,8 +942,12 @@
             </label>
           </div>
 
-          <button type="button" onclick="shareCurrentTrip()" class="w-full py-2.5 px-3 bg-cyan-50 hover:bg-cyan-100 active:scale-95 text-cyan-800 border border-cyan-200 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-            <span class="material-symbols-rounded text-sm">share</span> Dela aktiv resa
+          <button type="button" onclick="openQrModal()" class="w-full py-2.5 px-3 bg-cyan-50 hover:bg-cyan-100 active:scale-95 text-cyan-800 border border-cyan-200 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+            <span class="material-symbols-rounded text-sm">qr_code_2</span> Skapa delningslänk & QR-kod
+          </button>
+
+          <button type="button" onclick="shareCurrentTrip()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+            <span class="material-symbols-rounded text-sm">share</span> Dela reseuppgifter (text/JSON)
           </button>
 
           <button type="button" onclick="importSingleTripFromClipboard()" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 rounded-2xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
@@ -806,6 +969,10 @@
     // --- APP STATE & LOCAL STORAGE ---
     const STORAGE_KEY = 'vacation_countdown_multi_v1';
     const OLD_STORAGE_KEY = 'vacation_countdown_data_sv';
+
+    let deferredInstallPrompt = null;
+    let qrCodeInstance = null;
+    let hasCelebratedStart = false;
 
     function createEmptyTrip(title = 'Mallorca, Spanien', daysAhead = 45, theme = 'tropical') {
       const d = new Date();
@@ -836,12 +1003,14 @@
           hotel: '',
           bookingRef: '',
           memo: ''
-        }
+        },
+        timeline: []
       };
     }
 
     let store = loadAllTrips();
     let appData = getActiveTrip();
+    hasCelebratedStart = sessionStorage.getItem('vacation_celebrated_' + appData.id) === 'true';
 
     function loadAllTrips() {
       try {
@@ -883,6 +1052,10 @@
         fallbackEnd.setHours(22, 0, 0, 0);
         found.endDate = fallbackEnd.toISOString();
         saveState();
+      }
+
+      if (!Array.isArray(found.timeline)) {
+        found.timeline = [];
       }
 
       return found;
@@ -967,15 +1140,15 @@
 
     // --- VÄDERFUNKTIONER (Open-Meteo) ---
     function getWeatherMeta(code) {
-      if (code === 0) return { desc: 'Klart & soligt', icon: 'sunny', emoji: '☀️' };
-      if ([1, 2].includes(code)) return { desc: 'Halvklart', icon: 'partly_cloudy_day', emoji: '⛅' };
-      if (code === 3) return { desc: 'Mulet', icon: 'cloud', emoji: '☁️' };
-      if ([45, 48].includes(code)) return { desc: 'Dimmigt', icon: 'foggy', emoji: '🌫️' };
-      if ([51, 53, 55, 61, 63, 65].includes(code)) return { desc: 'Regn', icon: 'rainy', emoji: '🌧️' };
-      if ([71, 73, 75, 77, 85, 86].includes(code)) return { desc: 'Snöfall', icon: 'weather_snowy', emoji: '🌨️' };
-      if ([80, 81, 82].includes(code)) return { desc: 'Regnskurar', icon: 'rainy', emoji: '🌦️' };
-      if ([95, 96, 99].includes(code)) return { desc: 'Åska', icon: 'thunderstorm', emoji: '⛈️' };
-      return { desc: 'Växlande', icon: 'cloud', emoji: '🌤️' };
+      if (code === 0) return { desc: 'Klart & soligt', icon: 'sunny', emoji: '☀️', isRainy: false };
+      if ([1, 2].includes(code)) return { desc: 'Halvklart', icon: 'partly_cloudy_day', emoji: '⛅', isRainy: false };
+      if (code === 3) return { desc: 'Mulet', icon: 'cloud', emoji: '☁️', isRainy: false };
+      if ([45, 48].includes(code)) return { desc: 'Dimmigt', icon: 'foggy', emoji: '🌫️', isRainy: false };
+      if ([51, 53, 55, 61, 63, 65].includes(code)) return { desc: 'Regn', icon: 'rainy', emoji: '🌧️', isRainy: true };
+      if ([71, 73, 75, 77, 85, 86].includes(code)) return { desc: 'Snöfall', icon: 'weather_snowy', emoji: '🌨️', isRainy: false };
+      if ([80, 81, 82].includes(code)) return { desc: 'Regnskurar', icon: 'rainy', emoji: '🌦️', isRainy: true };
+      if ([95, 96, 99].includes(code)) return { desc: 'Åska', icon: 'thunderstorm', emoji: '⛈️', isRainy: true };
+      return { desc: 'Växlande', icon: 'cloud', emoji: '🌤️', isRainy: false };
     }
 
     async function fetchDestinationWeather(force = false) {
@@ -1052,11 +1225,13 @@
       forecastGrid.innerHTML = '';
 
       const weekdays = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
+      let willRain = meta.isRainy;
 
       for (let i = 0; i < 3; i++) {
         const dateObj = new Date(daily.time[i]);
         const dayName = i === 0 ? 'Idag' : weekdays[dateObj.getDay()];
         const dayMeta = getWeatherMeta(daily.weather_code[i]);
+        if (dayMeta.isRainy) willRain = true;
         const maxTemp = Math.round(daily.temperature_2m_max[i]);
         const minTemp = Math.round(daily.temperature_2m_min[i]);
 
@@ -1068,6 +1243,28 @@
           <span class="text-[11px] font-bold text-slate-800">${maxTemp}° <small class="text-slate-400 font-normal">${minTemp}°</small></span>
         `;
         forecastGrid.appendChild(dayCol);
+      }
+
+      // Punkt 2: Regnnotis i packlistan
+      const rainAlert = document.getElementById('packing-weather-alert');
+      if (rainAlert) {
+        if (willRain) rainAlert.classList.remove('hidden');
+        else rainAlert.classList.add('hidden');
+      }
+    }
+
+    function addQuickWeatherPackItem() {
+      const text = 'Paraply / Regnkläder';
+      if (!appData.checklist.some(i => i.text.toLowerCase().includes('paraply') || i.text.toLowerCase().includes('regn'))) {
+        appData.checklist.unshift({
+          id: Date.now(),
+          text: text,
+          category: 'carryon',
+          packed: false
+        });
+        saveState();
+        renderChecklist();
+        showToast('Lade till paraply/regnkläder i packlistan!');
       }
     }
 
@@ -1112,6 +1309,7 @@
     function switchActiveTrip(tripId) {
       store.activeTripId = tripId;
       appData = getActiveTrip();
+      hasCelebratedStart = sessionStorage.getItem('vacation_celebrated_' + appData.id) === 'true';
       saveState();
       applyTheme(appData.theme);
       renderAll();
@@ -1129,6 +1327,7 @@
       store.trips.push(newTrip);
       store.activeTripId = newTrip.id;
       appData = newTrip;
+      hasCelebratedStart = false;
 
       saveState();
       applyTheme(appData.theme);
@@ -1154,6 +1353,7 @@
           store.activeTripId = store.trips[0].id;
         }
         appData = getActiveTrip();
+        hasCelebratedStart = sessionStorage.getItem('vacation_celebrated_' + appData.id) === 'true';
         saveState();
         applyTheme(appData.theme);
         renderAll();
@@ -1164,7 +1364,141 @@
       }
     }
 
-    // --- BACKUP & DELNING ---
+    // --- PUNKT 3: DELNING & QR-KOD VIA URL ---
+    function getShareableUrl() {
+      const payload = {
+        destination: appData.destination,
+        targetDate: appData.targetDate,
+        endDate: appData.endDate,
+        theme: appData.theme,
+        budget: appData.budget,
+        notes: appData.notes || {},
+        checklist: appData.checklist || [],
+        timeline: appData.timeline || []
+      };
+      const jsonStr = JSON.stringify(payload);
+      const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
+      return `${window.location.origin}${window.location.pathname}?trip=${encoded}`;
+    }
+
+    function openQrModal() {
+      closeModal('modal-trips');
+      openModal('modal-qr-share');
+      const box = document.getElementById('qrcode-box');
+      box.innerHTML = '';
+
+      const shareUrl = getShareableUrl();
+      if (typeof QRCode !== 'undefined') {
+        qrCodeInstance = new QRCode(box, {
+          text: shareUrl,
+          width: 170,
+          height: 170,
+          colorDark: "#006874",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } else {
+        box.innerHTML = '<p class="text-xs text-slate-500">Kunde inte ladda QR-kodgeneratorn.</p>';
+      }
+    }
+
+    async function copyShareableUrl() {
+      const url = getShareableUrl();
+      try {
+        await navigator.clipboard.writeText(url);
+        showToast('Delningslänk kopierad till urklipp!');
+      } catch (e) {
+        prompt('Kopiera länken manuellt:', url);
+      }
+    }
+
+    async function shareLinkViaSystem() {
+      const url = getShareableUrl();
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Resa till ${appData.destination}`,
+            text: `Här är reseuppgifterna för vår resa till ${appData.destination}! Öppna länken i webbläsaren för att spara den i din app:`,
+            url: url
+          });
+          return;
+        } catch (e) {
+          if (e.name === 'AbortError') return;
+        }
+      }
+      copyShareableUrl();
+    }
+
+    async function shareCountdownStatus() {
+      const days = document.getElementById('count-days').textContent;
+      const text = `Bara ${days} dagar kvar tills vi åker till ${appData.destination}! 🌴✈️`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Nedräkning till ${appData.destination}`,
+            text: text,
+            url: window.location.href.split('?')[0]
+          });
+          return;
+        } catch (e) {
+          if (e.name === 'AbortError') return;
+        }
+      }
+
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Nedräkningsstatus kopierad till urklipp!');
+      } catch (e) {
+        showToast('Kunde inte dela.');
+      }
+    }
+
+    function checkUrlForSharedTrip() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tripDataParam = urlParams.get('trip');
+      if (!tripDataParam) return;
+
+      try {
+        const decodedJson = decodeURIComponent(escape(atob(decodeURIComponent(tripDataParam))));
+        const parsed = JSON.parse(decodedJson);
+
+        if (parsed && parsed.destination && parsed.targetDate) {
+          setTimeout(() => {
+            if (confirm(`Vill du importera och visa den delade resan till "${parsed.destination}"?`)) {
+              const newTrip = {
+                id: Date.now() + Math.floor(Math.random() * 1000),
+                destination: parsed.destination,
+                targetDate: parsed.targetDate,
+                endDate: parsed.endDate || new Date(new Date(parsed.targetDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                theme: parsed.theme || 'tropical',
+                budget: parsed.budget || 10000,
+                expenses: [],
+                checklist: parsed.checklist || [],
+                notes: parsed.notes || { flightNo: '', gate: '', hotel: '', bookingRef: '', memo: '' },
+                timeline: parsed.timeline || []
+              };
+              store.trips.push(newTrip);
+              store.activeTripId = newTrip.id;
+              appData = newTrip;
+              hasCelebratedStart = false;
+              saveState();
+              applyTheme(appData.theme);
+              renderAll();
+              updateCountdown();
+              fetchDestinationWeather();
+              showToast(`Resan till ${parsed.destination} har importerats! 🎉`);
+
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
+          }, 400);
+        }
+      } catch (err) {
+        console.error('Kunde inte tolka resa från länk:', err);
+      }
+    }
+
+    // --- SÄKERHETSKOPIA FILHANTERING ---
     function exportFullBackup() {
       try {
         const backupData = {
@@ -1213,6 +1547,7 @@
             store = restoredStore;
             saveState();
             appData = getActiveTrip();
+            hasCelebratedStart = sessionStorage.getItem('vacation_celebrated_' + appData.id) === 'true';
             applyTheme(appData.theme);
             renderAll();
             updateCountdown();
@@ -1252,7 +1587,6 @@
           return;
         } catch (err) {
           if (err.name === 'AbortError') return;
-          console.warn('Web Share stötte på ett problem, kopierar till urklipp istället.');
         }
       }
 
@@ -1273,7 +1607,7 @@
           clipText = await navigator.clipboard.readText();
         }
       } catch (e) {
-        console.warn('Urklippsbehörighet nekades eller ej tillgänglig:', e);
+        console.warn('Urklippsbehörighet nekades:', e);
       }
 
       if (!clipText || !clipText.trim()) {
@@ -1308,6 +1642,7 @@
         if (!importedTrip.checklist) importedTrip.checklist = [];
         if (!importedTrip.expenses) importedTrip.expenses = [];
         if (!importedTrip.notes) importedTrip.notes = { flightNo: '', gate: '', hotel: '', bookingRef: '', memo: '' };
+        if (!importedTrip.timeline) importedTrip.timeline = [];
         if (!importedTrip.endDate) {
           const startMs = new Date(importedTrip.targetDate).getTime();
           importedTrip.endDate = new Date(startMs + 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -1316,6 +1651,7 @@
         store.trips.push(importedTrip);
         store.activeTripId = importedTrip.id;
         appData = importedTrip;
+        hasCelebratedStart = false;
 
         saveState();
         applyTheme(appData.theme || 'tropical');
@@ -1329,6 +1665,74 @@
         console.error('Kunde inte läsa in delad resa:', err);
         alert('Kunde inte läsa texten. Kontrollera att hela den kopierade texten klistrades in.');
       }
+    }
+
+    // --- PUNKT 4: KARTLÄNKAR & DAGSPLANERING ---
+    function openHotelInMaps() {
+      const hotel = document.getElementById('info-hotel').value.trim();
+      const query = hotel ? `${hotel}, ${appData.destination}` : appData.destination;
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+      window.open(mapsUrl, '_blank');
+    }
+
+    function openLocationInMaps(location) {
+      const query = `${location}, ${appData.destination}`;
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
+    }
+
+    function renderTimeline() {
+      if (!Array.isArray(appData.timeline)) appData.timeline = [];
+
+      const listEl = document.getElementById('timeline-list');
+      const emptyEl = document.getElementById('timeline-empty');
+      const countEl = document.getElementById('timeline-count');
+      if (!listEl) return;
+
+      listEl.innerHTML = '';
+      countEl.textContent = `${appData.timeline.length} inbokade`;
+
+      if (appData.timeline.length === 0) {
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+
+      const sorted = [...appData.timeline].sort((a, b) => {
+        return new Date(`${a.date}T${a.time || '00:00'}`) - new Date(`${b.date}T${b.time || '00:00'}`);
+      });
+
+      sorted.forEach(act => {
+        const d = new Date(act.date);
+        const dateStr = d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' });
+
+        const li = document.createElement('li');
+        li.className = 'p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between gap-2';
+        li.innerHTML = `
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-1.5 font-bold text-slate-800">
+              <span class="text-teal-800">${dateStr}</span>
+              ${act.time ? `<span class="text-slate-400 font-normal">kl. ${act.time}</span>` : ''}
+              <span class="truncate ml-1 font-semibold text-slate-900">${escapeHtml(act.title)}</span>
+            </div>
+            ${act.location ? `
+              <div class="flex items-center gap-1 text-[11px] text-cyan-700 mt-0.5 cursor-pointer hover:underline" onclick="openLocationInMaps('${escapeHtml(act.location)}')">
+                <span class="material-symbols-rounded text-xs">location_on</span>
+                <span class="truncate">${escapeHtml(act.location)}</span>
+              </div>
+            ` : ''}
+          </div>
+          <button onclick="deleteActivity(${act.id})" class="text-slate-400 hover:text-rose-500 p-1 shrink-0">
+            <span class="material-symbols-rounded text-base">delete</span>
+          </button>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    function deleteActivity(id) {
+      appData.timeline = appData.timeline.filter(a => a.id !== id);
+      saveState();
+      renderTimeline();
     }
 
     // --- VALUTAOMVANDLARE ---
@@ -1369,7 +1773,7 @@
           updateCurrencyRates();
         }
       } catch (e) {
-        console.warn('Kunde inte uppdatera växelkurser online, använder offline-kurser:', e);
+        console.warn('Offline eller växelkursfel, använder sparade kurser:', e);
       }
     }
 
@@ -1508,11 +1912,33 @@
       updatePackingProgress();
       renderBudget();
       renderTripsList();
+      renderTimeline();
     }
 
     function startCountdownTimer() {
       updateCountdown();
       setInterval(updateCountdown, 1000);
+    }
+
+    // --- PUNKT 5: FIRANDE MED STORT KONFETTIREGN VID START ---
+    function triggerGrandCelebration() {
+      if (typeof confetti === 'function') {
+        const count = 200;
+        const defaults = { origin: { y: 0.7 } };
+
+        function fire(particleRatio, opts) {
+          confetti(Object.assign({}, defaults, opts, {
+            particleCount: Math.floor(count * particleRatio)
+          }));
+        }
+
+        fire(0.25, { spread: 26, startVelocity: 55 });
+        fire(0.2, { spread: 60 });
+        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+        fire(0.1, { spread: 120, startVelocity: 45 });
+      }
+      showToast('SEMESTERN HAR BÖRJAT! Njut av ledigheten! 🌴🎉');
     }
 
     function updateCountdown() {
@@ -1547,6 +1973,13 @@
 
       // 2. LÄGE: SEMESTERN PÅGÅR JUST NU
       if (now >= startDate && now < endDate) {
+        // Punkt 5: Skjut av konfettikanonen en gång när semestern precis startat
+        if (!hasCelebratedStart) {
+          hasCelebratedStart = true;
+          sessionStorage.setItem('vacation_celebrated_' + appData.id, 'true');
+          triggerGrandCelebration();
+        }
+
         const timeLeft = endDate - now;
         const totalVacationDuration = endDate - startDate;
         const elapsed = now - startDate;
@@ -1704,6 +2137,16 @@
       renderChecklist();
     }
 
+    function uncheckAllPackItems() {
+      if (appData.checklist.length === 0) return;
+      if (confirm('Vill du avbocka alla saker i listan så att du kan börja om från början?')) {
+        appData.checklist.forEach(item => { item.packed = false; });
+        saveState();
+        renderChecklist();
+        showToast('Alla bockar nollställdes!');
+      }
+    }
+
     function clearPackedItems() {
       const packedCount = appData.checklist.filter(i => i.packed).length;
       if (packedCount === 0) return;
@@ -1761,24 +2204,50 @@
       renderChecklist();
     }
 
-    function addPresetPackItems() {
-      const presets = [
+    const packingTemplates = {
+      tropical: [
         { text: 'Pass & Biljetter', category: 'carryon' },
-        { text: 'Plånbok & Betalkort', category: 'carryon' },
-        { text: 'Hörlurar & Powerbank', category: 'carryon' },
-        { text: 'Viktiga mediciner', category: 'carryon' },
-        { text: 'Tandborste & Deo', category: 'morning' },
-        { text: 'Mobilladdare', category: 'morning' },
-        { text: 'Slå av kaffebryggare & låsa', category: 'morning' },
-        { text: 'Underkläder & Strumpor', category: 'luggage' },
-        { text: 'Badkläder & Solglasögon', category: 'luggage' },
-        { text: 'Skor & Ombyten', category: 'luggage' },
-        { text: 'Solkräm & Necessär', category: 'luggage' },
-        { text: 'Reseadapter', category: 'luggage' }
-      ];
+        { text: 'Solglasögon', category: 'carryon' },
+        { text: 'Badkläder & Badlakan', category: 'luggage' },
+        { text: 'Solkräm & After Sun', category: 'luggage' },
+        { text: 'Myggspray / Myggmedel', category: 'luggage' },
+        { text: 'UV-tröja / Keps / Solhatt', category: 'luggage' },
+        { text: 'Strandväska & Vattentätt fodral', category: 'luggage' },
+        { text: 'Tandborste & Deo', category: 'morning' }
+      ],
+      roadtrip: [
+        { text: 'Körkort & Registreringsbevis', category: 'carryon' },
+        { text: '12V-mobilladdare / Sladdar', category: 'carryon' },
+        { text: 'Nivåklossar & Vattenpass', category: 'luggage' },
+        { text: 'CEE-elkabel & Adapter', category: 'luggage' },
+        { text: 'Grillkol, Tändare & Grilltång', category: 'luggage' },
+        { text: 'Multiverktyg & Ficklampa', category: 'luggage' },
+        { text: 'Vattendunk / Slang', category: 'luggage' },
+        { text: 'Termos & Kaffemuggar', category: 'morning' }
+      ],
+      city: [
+        { text: 'Pass / ID & Betalkort', category: 'carryon' },
+        { text: 'Powerbank & Laddsladd', category: 'carryon' },
+        { text: 'Sköna promenadskor (ingådda)', category: 'luggage' },
+        { text: 'Liten dagsryggsäck / Magväska', category: 'carryon' },
+        { text: 'Paraply i fickformat', category: 'carryon' },
+        { text: 'Skavsårsplåster', category: 'luggage' },
+        { text: 'Finare kvällskläder', category: 'luggage' }
+      ],
+      mountains: [
+        { text: 'Funktionsunderställ (ull)', category: 'luggage' },
+        { text: 'Vind- & Vattentät jacka', category: 'luggage' },
+        { text: 'Vandringskängor / Varma kängor', category: 'luggage' },
+        { text: 'Sittunderlag & Termos', category: 'luggage' },
+        { text: 'Mössa, Vantar & Buff', category: 'luggage' },
+        { text: 'Första hjälpen & Skavsårsplåster', category: 'carryon' }
+      ]
+    };
 
+    function applyPresetTheme(type) {
+      const items = packingTemplates[type] || packingTemplates.tropical;
       let added = 0;
-      presets.forEach(p => {
+      items.forEach(p => {
         if (!appData.checklist.some(item => item.text.toLowerCase() === p.text.toLowerCase())) {
           appData.checklist.push({
             id: Date.now() + Math.floor(Math.random() * 1000),
@@ -1789,10 +2258,10 @@
           added++;
         }
       });
-
       saveState();
       renderChecklist();
-      showToast(`${added} reseföremål lades till i listan!`);
+      closeModal('modal-pack-templates');
+      showToast(`${added} nya föremål lades till i listan!`);
     }
 
     // --- THEME APPLICATION ---
@@ -1922,6 +2391,32 @@
 
     // --- EVENT LISTENERS ---
     function setupEventListeners() {
+      const installBtn = document.getElementById('btn-install-pwa');
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        if (installBtn) installBtn.classList.remove('hidden');
+      });
+
+      if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+          if (!deferredInstallPrompt) return;
+          deferredInstallPrompt.prompt();
+          const { outcome } = await deferredInstallPrompt.userChoice;
+          if (outcome === 'accepted') {
+            showToast('Tack! Appen installeras på din enhet.');
+          }
+          deferredInstallPrompt = null;
+          installBtn.classList.add('hidden');
+        });
+      }
+
+      window.addEventListener('appinstalled', () => {
+        deferredInstallPrompt = null;
+        if (installBtn) installBtn.classList.add('hidden');
+        showToast('Semesterklockan har installerats! 🎉');
+      });
+
       const formExp = document.getElementById('form-add-expense');
       if (formExp) {
         formExp.addEventListener('submit', (e) => {
@@ -2017,7 +2512,35 @@
         }
       });
 
-      ['modal-edit', 'modal-theme', 'modal-trips'].forEach(modalId => {
+      // Lägg till aktivitet i tidslinjen (Punkt 4)
+      const actForm = document.getElementById('form-add-activity');
+      if (actForm) {
+        actForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const dateInput = document.getElementById('input-act-date');
+          const timeInput = document.getElementById('input-act-time');
+          const titleInput = document.getElementById('input-act-title');
+          const locInput = document.getElementById('input-act-location');
+
+          if (!Array.isArray(appData.timeline)) appData.timeline = [];
+
+          appData.timeline.push({
+            id: Date.now(),
+            date: dateInput.value,
+            time: timeInput.value || '',
+            title: titleInput.value.trim(),
+            location: locInput.value.trim()
+          });
+
+          saveState();
+          renderTimeline();
+          titleInput.value = '';
+          locInput.value = '';
+          showToast('Aktivitet sparad i dagsplanen!');
+        });
+      }
+
+      ['modal-edit', 'modal-theme', 'modal-trips', 'modal-pack-templates', 'modal-qr-share'].forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (modal) {
           modal.addEventListener('click', (e) => {
@@ -2031,6 +2554,14 @@
 
     // --- INITIALIZATION ---
     function init() {
+      checkUrlForSharedTrip();
+
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      if (isStandalone) {
+        const btn = document.getElementById('btn-install-pwa');
+        if (btn) btn.classList.add('hidden');
+      }
+
       applyTheme(appData.theme);
       renderAll();
       renderTripsList();
@@ -2040,7 +2571,6 @@
       startCountdownTimer();
       fetchDestinationWeather();
 
-      // Öppna direkt vald vy om appen startas från en hemskärms-genväg
       const hash = window.location.hash.replace('#', '');
       if (['checklist', 'budget', 'notes'].includes(hash)) {
         switchTab(hash);
