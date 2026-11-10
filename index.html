@@ -356,7 +356,7 @@
                 <p id="packing-full-counter" class="text-xs text-slate-500">Klicka på en sak när den ligger i väskan</p>
               </div>
               <div class="flex items-center gap-1.5">
-                <!-- Nollställ bockar (Snabb-återställning) -->
+                <!-- Nollställ bockar -->
                 <button onclick="uncheckAllPackItems()" title="Nollställ alla bockar inför ny resa" class="text-xs font-semibold bg-white/90 text-slate-600 border border-slate-200 hover:bg-slate-100 px-2.5 py-1.5 rounded-full transition shadow-sm flex items-center gap-1">
                   <span class="material-symbols-rounded text-sm">restart_alt</span>
                   <span class="hidden sm:inline">Nollställ</span>
@@ -409,7 +409,6 @@
 
             <!-- Tvådelad filter- och åtgärdssektion -->
             <div class="space-y-1.5 mb-2">
-              <!-- Rad 1: Statusfilter & Rensa-knapp -->
               <div class="flex items-center justify-between gap-1.5 text-[11px]">
                 <div class="flex items-center gap-1">
                   <button onclick="filterPacking('alla', event)" class="pack-filter active px-2.5 py-1 rounded-xl bg-cyan-700 text-white font-semibold transition">Alla</button>
@@ -422,7 +421,6 @@
                 </button>
               </div>
 
-              <!-- Rad 2: Snabbtaggar / Väskor -->
               <div class="flex items-center gap-1 text-[10px] overflow-x-auto pb-0.5 no-scrollbar">
                 <button onclick="filterPacking('carryon', event)" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 shrink-0 transition">🎒 Handbagage</button>
                 <button onclick="filterPacking('luggage', event)" class="pack-filter px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 shrink-0 transition">🧳 Resväska</button>
@@ -501,7 +499,7 @@
                 <span class="material-symbols-rounded text-base">save</span> Spara reseuppgifter
               </button>
 
-              <!-- Dagsplanering / Tidslinje (Punkt 4) -->
+              <!-- Dagsplanering / Tidslinje -->
               <div class="bg-white/90 p-3.5 rounded-2xl border border-slate-200/80 shadow-sm space-y-3 mt-4">
                 <div class="flex justify-between items-center">
                   <span class="text-slate-800 font-bold flex items-center gap-1.5 text-xs">
@@ -1245,7 +1243,6 @@
         forecastGrid.appendChild(dayCol);
       }
 
-      // Punkt 2: Regnnotis i packlistan
       const rainAlert = document.getElementById('packing-weather-alert');
       if (rainAlert) {
         if (willRain) rainAlert.classList.remove('hidden');
@@ -1364,17 +1361,22 @@
       }
     }
 
-    // --- PUNKT 3: DELNING & QR-KOD VIA URL ---
+    // --- DELNING & QR-KOD VIA URL (Kompakt format) ---
     function getShareableUrl() {
       const payload = {
-        destination: appData.destination,
-        targetDate: appData.targetDate,
-        endDate: appData.endDate,
-        theme: appData.theme,
-        budget: appData.budget,
-        notes: appData.notes || {},
-        checklist: appData.checklist || [],
-        timeline: appData.timeline || []
+        d: appData.destination,
+        t: appData.targetDate,
+        e: appData.endDate,
+        th: appData.theme,
+        b: appData.budget,
+        n: {
+          f: appData.notes?.flightNo || '',
+          g: appData.notes?.gate || '',
+          h: appData.notes?.hotel || '',
+          r: appData.notes?.bookingRef || '',
+          m: appData.notes?.memo || ''
+        },
+        tl: (appData.timeline || []).map(a => ({ d: a.date, t: a.time, ti: a.title, l: a.location }))
       };
       const jsonStr = JSON.stringify(payload);
       const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
@@ -1418,7 +1420,7 @@
         try {
           await navigator.share({
             title: `Resa till ${appData.destination}`,
-            text: `Här är reseuppgifterna för vår resa till ${appData.destination}! Öppna länken i webbläsaren för att spara den i din app:`,
+            text: `Här är reseuppgifterna för vår resa till ${appData.destination}! Öppna länken för att spara den i din app:`,
             url: url
           });
           return;
@@ -1463,21 +1465,46 @@
         const decodedJson = decodeURIComponent(escape(atob(decodeURIComponent(tripDataParam))));
         const parsed = JSON.parse(decodedJson);
 
-        if (parsed && parsed.destination && parsed.targetDate) {
+        // Hantera både det nya kompakta formatet (d, t) och det äldre fulla formatet
+        const dest = parsed.d || parsed.destination;
+        const target = parsed.t || parsed.targetDate;
+
+        if (dest && target) {
           setTimeout(() => {
-            if (confirm(`Vill du importera och visa den delade resan till "${parsed.destination}"?`)) {
+            if (confirm(`Vill du importera och visa den delade resan till "${dest}"?`)) {
+              const notes = parsed.n ? {
+                flightNo: parsed.n.f || '',
+                gate: parsed.n.g || '',
+                hotel: parsed.n.h || '',
+                bookingRef: parsed.n.r || '',
+                memo: parsed.n.m || ''
+              } : (parsed.notes || { flightNo: '', gate: '', hotel: '', bookingRef: '', memo: '' });
+
+              const timeline = parsed.tl ? parsed.tl.map(a => ({
+                id: Date.now() + Math.floor(Math.random() * 500),
+                date: a.d,
+                time: a.t || '',
+                title: a.ti,
+                location: a.l || ''
+              })) : (parsed.timeline || []);
+
               const newTrip = {
                 id: Date.now() + Math.floor(Math.random() * 1000),
-                destination: parsed.destination,
-                targetDate: parsed.targetDate,
-                endDate: parsed.endDate || new Date(new Date(parsed.targetDate).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                theme: parsed.theme || 'tropical',
-                budget: parsed.budget || 10000,
+                destination: dest,
+                targetDate: target,
+                endDate: parsed.e || parsed.endDate || new Date(new Date(target).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                theme: parsed.th || parsed.theme || 'tropical',
+                budget: parsed.b || parsed.budget || 10000,
                 expenses: [],
-                checklist: parsed.checklist || [],
-                notes: parsed.notes || { flightNo: '', gate: '', hotel: '', bookingRef: '', memo: '' },
-                timeline: parsed.timeline || []
+                checklist: parsed.checklist || [
+                  { id: 1, text: 'Pass & Plånbok', category: 'carryon', packed: false },
+                  { id: 2, text: 'Mobil & Laddare', category: 'morning', packed: false },
+                  { id: 3, text: 'Kläder & Ombyten', category: 'luggage', packed: false }
+                ],
+                notes: notes,
+                timeline: timeline
               };
+
               store.trips.push(newTrip);
               store.activeTripId = newTrip.id;
               appData = newTrip;
@@ -1487,7 +1514,7 @@
               renderAll();
               updateCountdown();
               fetchDestinationWeather();
-              showToast(`Resan till ${parsed.destination} har importerats! 🎉`);
+              showToast(`Resan till ${dest} har importerats! 🎉`);
 
               window.history.replaceState({}, document.title, window.location.pathname);
             }
@@ -1667,7 +1694,7 @@
       }
     }
 
-    // --- PUNKT 4: KARTLÄNKAR & DAGSPLANERING ---
+    // --- KARTLÄNKAR & DAGSPLANERING ---
     function openHotelInMaps() {
       const hotel = document.getElementById('info-hotel').value.trim();
       const query = hotel ? `${hotel}, ${appData.destination}` : appData.destination;
@@ -1678,6 +1705,14 @@
     function openLocationInMaps(location) {
       const query = `${location}, ${appData.destination}`;
       window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
+    }
+
+    // Säker öppning via id för att förhindra krascher vid apostrofer/citattecken i platsnamn
+    function openActivityLocation(id) {
+      const act = (appData.timeline || []).find(a => a.id === id);
+      if (act && act.location) {
+        openLocationInMaps(act.location);
+      }
     }
 
     function renderTimeline() {
@@ -1715,7 +1750,7 @@
               <span class="truncate ml-1 font-semibold text-slate-900">${escapeHtml(act.title)}</span>
             </div>
             ${act.location ? `
-              <div class="flex items-center gap-1 text-[11px] text-cyan-700 mt-0.5 cursor-pointer hover:underline" onclick="openLocationInMaps('${escapeHtml(act.location)}')">
+              <div class="flex items-center gap-1 text-[11px] text-cyan-700 mt-0.5 cursor-pointer hover:underline" onclick="openActivityLocation(${act.id})">
                 <span class="material-symbols-rounded text-xs">location_on</span>
                 <span class="truncate">${escapeHtml(act.location)}</span>
               </div>
@@ -1730,7 +1765,7 @@
     }
 
     function deleteActivity(id) {
-      appData.timeline = appData.timeline.filter(a => a.id !== id);
+      appData.timeline = (appData.timeline || []).filter(a => a.id !== id);
       saveState();
       renderTimeline();
     }
@@ -1920,7 +1955,7 @@
       setInterval(updateCountdown, 1000);
     }
 
-    // --- PUNKT 5: FIRANDE MED STORT KONFETTIREGN VID START ---
+    // --- FIRANDE MED STORT KONFETTIREGN VID START ---
     function triggerGrandCelebration() {
       if (typeof confetti === 'function') {
         const count = 200;
@@ -1973,7 +2008,6 @@
 
       // 2. LÄGE: SEMESTERN PÅGÅR JUST NU
       if (now >= startDate && now < endDate) {
-        // Punkt 5: Skjut av konfettikanonen en gång när semestern precis startat
         if (!hasCelebratedStart) {
           hasCelebratedStart = true;
           sessionStorage.setItem('vacation_celebrated_' + appData.id, 'true');
@@ -2384,6 +2418,7 @@
     }
 
     function escapeHtml(text) {
+      if (!text) return '';
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
@@ -2512,7 +2547,6 @@
         }
       });
 
-      // Lägg till aktivitet i tidslinjen (Punkt 4)
       const actForm = document.getElementById('form-add-activity');
       if (actForm) {
         actForm.addEventListener('submit', (e) => {
