@@ -356,12 +356,10 @@
                 <p id="packing-full-counter" class="text-xs text-slate-500">Klicka på en sak när den ligger i väskan</p>
               </div>
               <div class="flex items-center gap-1.5">
-                <!-- Nollställ bockar -->
                 <button onclick="uncheckAllPackItems()" title="Nollställ alla bockar inför ny resa" class="text-xs font-semibold bg-white/90 text-slate-600 border border-slate-200 hover:bg-slate-100 px-2.5 py-1.5 rounded-full transition shadow-sm flex items-center gap-1">
                   <span class="material-symbols-rounded text-sm">restart_alt</span>
                   <span class="hidden sm:inline">Nollställ</span>
                 </button>
-                <!-- Öppna mallväljare -->
                 <button onclick="openModal('modal-pack-templates')" class="text-xs font-semibold bg-white/90 text-cyan-800 border border-cyan-200 hover:bg-cyan-50 px-3 py-1.5 rounded-full transition shadow-sm flex items-center gap-1">
                   <span class="material-symbols-rounded text-sm">auto_fix_high</span> Mallar
                 </button>
@@ -511,13 +509,19 @@
                 <!-- Formulär för ny aktivitet -->
                 <form id="form-add-activity" class="space-y-2 pt-1 border-t border-slate-100">
                   <div class="grid grid-cols-2 gap-2">
-                    <input type="date" id="input-act-date" required class="text-xs p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
-                    <input type="time" id="input-act-time" class="text-xs p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700">
+                    <div>
+                      <label class="text-[9px] text-slate-400 font-bold uppercase block mb-0.5">Datum</label>
+                      <input type="date" id="input-act-date" required class="w-full text-xs p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-medium">
+                    </div>
+                    <div>
+                      <label class="text-[9px] text-slate-400 font-bold uppercase block mb-0.5">Klockslag (valfritt)</label>
+                      <input type="time" id="input-act-time" class="w-full text-xs p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 font-medium">
+                    </div>
                   </div>
                   <div class="flex gap-2">
-                    <input type="text" id="input-act-title" required placeholder="Aktivitet/restaurang..." class="flex-1 text-xs p-2 rounded-xl bg-slate-50 border border-slate-200">
-                    <input type="text" id="input-act-location" placeholder="Plats/adress..." class="flex-1 text-xs p-2 rounded-xl bg-slate-50 border border-slate-200">
-                    <button type="submit" class="bg-teal-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center shadow-sm">
+                    <input type="text" id="input-act-title" required placeholder="Aktivitet/restaurang..." class="flex-1 text-xs p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800">
+                    <input type="text" id="input-act-location" placeholder="Plats/adress (valfritt)..." class="flex-1 text-xs p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-800">
+                    <button type="submit" class="bg-teal-700 active:bg-teal-800 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center shadow-sm transition">
                       <span class="material-symbols-rounded text-base">add</span>
                     </button>
                   </div>
@@ -1265,103 +1269,7 @@
       }
     }
 
-    // --- FLERA RESOR HANTERING ---
-    function renderTripsList() {
-      const listEl = document.getElementById('trips-list');
-      if (!listEl) return;
-      listEl.innerHTML = '';
-
-      store.trips.forEach(trip => {
-        const isActive = trip.id === store.activeTripId;
-        const target = new Date(trip.targetDate);
-        const dateStr = target.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' });
-
-        const li = document.createElement('li');
-        li.className = `p-3 rounded-2xl border transition flex items-center justify-between cursor-pointer ${
-          isActive 
-            ? 'bg-cyan-50 border-cyan-500 shadow-sm' 
-            : 'bg-white border-slate-200 hover:bg-slate-50'
-        }`;
-
-        li.innerHTML = `
-          <div class="flex-1" onclick="switchActiveTrip(${trip.id})">
-            <div class="flex items-center gap-1.5">
-              <strong class="text-xs text-slate-900">${escapeHtml(trip.destination)}</strong>
-              ${isActive ? '<span class="text-[10px] bg-cyan-700 text-white font-bold px-2 py-0.5 rounded-full">Aktiv</span>' : ''}
-            </div>
-            <span class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-              <span class="material-symbols-rounded text-xs">calendar_month</span> ${dateStr}
-            </span>
-          </div>
-          ${store.trips.length > 1 ? `
-            <button onclick="deleteTrip(${trip.id}, event)" class="p-2 text-slate-400 hover:text-rose-500 transition">
-              <span class="material-symbols-rounded text-base">delete</span>
-            </button>
-          ` : ''}
-        `;
-        listEl.appendChild(li);
-      });
-    }
-
-    function switchActiveTrip(tripId) {
-      store.activeTripId = tripId;
-      appData = getActiveTrip();
-      hasCelebratedStart = sessionStorage.getItem('vacation_celebrated_' + appData.id) === 'true';
-      saveState();
-      applyTheme(appData.theme);
-      renderAll();
-      updateCountdown();
-      fetchDestinationWeather();
-      closeModal('modal-trips');
-      showToast(`Bytte till ${appData.destination}!`);
-    }
-
-    function addNewTripPrompt() {
-      const title = prompt('Vad är resmålet för den nya semestern?', 't.ex. Rom, Italien');
-      if (!title || !title.trim()) return;
-
-      const newTrip = createEmptyTrip(title.trim(), 60, 'city');
-      store.trips.push(newTrip);
-      store.activeTripId = newTrip.id;
-      appData = newTrip;
-      hasCelebratedStart = false;
-
-      saveState();
-      applyTheme(appData.theme);
-      renderAll();
-      updateCountdown();
-      fetchDestinationWeather();
-      closeModal('modal-trips');
-      showToast(`Resan "${title.trim()}" lades till!`);
-    }
-
-    function deleteTrip(tripId, e) {
-      e.stopPropagation();
-      if (store.trips.length <= 1) {
-        showToast('Du måste ha minst en resa kvar!');
-        return;
-      }
-      const toDelete = store.trips.find(t => t.id === tripId);
-      if (!toDelete) return;
-
-      if (confirm(`Är du säker på att du vill ta bort resan "${toDelete.destination}"?`)) {
-        store.trips = store.trips.filter(t => t.id !== tripId);
-        if (store.activeTripId === tripId) {
-          store.activeTripId = store.trips[0].id;
-        }
-        appData = getActiveTrip();
-        hasCelebratedStart = sessionStorage.getItem('vacation_celebrated_' + appData.id) === 'true';
-        saveState();
-        applyTheme(appData.theme);
-        renderAll();
-        updateCountdown();
-        fetchDestinationWeather();
-        renderTripsList();
-        showToast('Resan togs bort.');
-      }
-    }
-
-    // --- DELNING & QR-KOD VIA URL (Kompakt format) ---
+    // --- DELNING & QR-KOD VIA URL ---
     function getShareableUrl() {
       const payload = {
         d: appData.destination,
@@ -1465,7 +1373,6 @@
         const decodedJson = decodeURIComponent(escape(atob(decodeURIComponent(tripDataParam))));
         const parsed = JSON.parse(decodedJson);
 
-        // Hantera både det nya kompakta formatet (d, t) och det äldre fulla formatet
         const dest = parsed.d || parsed.destination;
         const target = parsed.t || parsed.targetDate;
 
@@ -1699,20 +1606,7 @@
       const hotel = document.getElementById('info-hotel').value.trim();
       const query = hotel ? `${hotel}, ${appData.destination}` : appData.destination;
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-      window.open(mapsUrl, '_blank');
-    }
-
-    function openLocationInMaps(location) {
-      const query = `${location}, ${appData.destination}`;
-      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
-    }
-
-    // Säker öppning via id för att förhindra krascher vid apostrofer/citattecken i platsnamn
-    function openActivityLocation(id) {
-      const act = (appData.timeline || []).find(a => a.id === id);
-      if (act && act.location) {
-        openLocationInMaps(act.location);
-      }
+      window.open(mapsUrl, '_blank', 'noopener');
     }
 
     function renderTimeline() {
@@ -1732,31 +1626,42 @@
       }
       emptyEl.classList.add('hidden');
 
+      // Säker sortering som inte kraschar på ogiltiga datum
       const sorted = [...appData.timeline].sort((a, b) => {
-        return new Date(`${a.date}T${a.time || '00:00'}`) - new Date(`${b.date}T${b.time || '00:00'}`);
+        const timeA = new Date(`${a.date || '1970-01-01'}T${a.time || '00:00'}`).getTime() || 0;
+        const timeB = new Date(`${b.date || '1970-01-01'}T${b.time || '00:00'}`).getTime() || 0;
+        return timeA - timeB;
       });
 
       sorted.forEach(act => {
-        const d = new Date(act.date);
-        const dateStr = d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' });
+        let dateStr = act.date || '';
+        try {
+          if (act.date) {
+            const d = new Date(act.date + 'T00:00:00');
+            dateStr = d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' });
+          }
+        } catch (e) {}
+
+        const mapsQuery = encodeURIComponent(`${act.location || ''}, ${appData.destination}`);
+        const mapsLink = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
 
         const li = document.createElement('li');
-        li.className = 'p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between gap-2';
+        li.className = 'p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between gap-2 shadow-sm';
         li.innerHTML = `
           <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-1.5 font-bold text-slate-800">
-              <span class="text-teal-800">${dateStr}</span>
-              ${act.time ? `<span class="text-slate-400 font-normal">kl. ${act.time}</span>` : ''}
-              <span class="truncate ml-1 font-semibold text-slate-900">${escapeHtml(act.title)}</span>
+            <div class="flex items-center gap-1.5 font-bold text-slate-800 flex-wrap">
+              <span class="text-teal-800 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100 text-[10px] uppercase">${dateStr}</span>
+              ${act.time ? `<span class="text-slate-400 font-normal text-[11px]">kl. ${escapeHtml(act.time)}</span>` : ''}
+              <span class="truncate ml-0.5 font-semibold text-slate-900">${escapeHtml(act.title)}</span>
             </div>
             ${act.location ? `
-              <div class="flex items-center gap-1 text-[11px] text-cyan-700 mt-0.5 cursor-pointer hover:underline" onclick="openActivityLocation(${act.id})">
+              <a href="${mapsLink}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-[11px] text-cyan-700 hover:text-cyan-900 mt-1 hover:underline">
                 <span class="material-symbols-rounded text-xs">location_on</span>
                 <span class="truncate">${escapeHtml(act.location)}</span>
-              </div>
+              </a>
             ` : ''}
           </div>
-          <button onclick="deleteActivity(${act.id})" class="text-slate-400 hover:text-rose-500 p-1 shrink-0">
+          <button type="button" onclick="deleteActivity(${act.id})" class="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 transition shrink-0">
             <span class="material-symbols-rounded text-base">delete</span>
           </button>
         `;
@@ -1948,6 +1853,12 @@
       renderBudget();
       renderTripsList();
       renderTimeline();
+
+      // Förifyll dagsplanens datumväljare med resans startdatum
+      const actDateEl = document.getElementById('input-act-date');
+      if (actDateEl && !actDateEl.value && appData.targetDate) {
+        actDateEl.value = appData.targetDate.split('T')[0];
+      }
     }
 
     function startCountdownTimer() {
@@ -1955,7 +1866,7 @@
       setInterval(updateCountdown, 1000);
     }
 
-    // --- FIRANDE MED STORT KONFETTIREGN VID START ---
+    // --- FIRANDE MED KONFETTIREGN VID START ---
     function triggerGrandCelebration() {
       if (typeof confetti === 'function') {
         const count = 200;
@@ -2547,6 +2458,7 @@
         }
       });
 
+      // Lägg till aktivitet i tidslinjen
       const actForm = document.getElementById('form-add-activity');
       if (actForm) {
         actForm.addEventListener('submit', (e) => {
@@ -2556,21 +2468,31 @@
           const titleInput = document.getElementById('input-act-title');
           const locInput = document.getElementById('input-act-location');
 
-          if (!Array.isArray(appData.timeline)) appData.timeline = [];
+          if (!dateInput.value || !titleInput.value.trim()) {
+            showToast('Fyll i datum och aktivitet.');
+            return;
+          }
 
-          appData.timeline.push({
-            id: Date.now(),
+          if (!Array.isArray(appData.timeline)) {
+            appData.timeline = [];
+          }
+
+          const newActivity = {
+            id: Date.now() + Math.floor(Math.random() * 1000),
             date: dateInput.value,
             time: timeInput.value || '',
             title: titleInput.value.trim(),
             location: locInput.value.trim()
-          });
+          };
 
+          appData.timeline.push(newActivity);
           saveState();
           renderTimeline();
+
           titleInput.value = '';
           locInput.value = '';
-          showToast('Aktivitet sparad i dagsplanen!');
+          timeInput.value = '';
+          showToast(`Lade till "${newActivity.title}" i dagsplanen!`);
         });
       }
 
