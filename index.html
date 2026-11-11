@@ -1432,6 +1432,109 @@
       }
     }
 
+    // --- RESEHANTERING & LISTNING (Mina resor) ---
+    function renderTripsList() {
+      const listEl = document.getElementById('trips-list');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+
+      store.trips.forEach(trip => {
+        const isActive = trip.id === store.activeTripId;
+        const targetD = new Date(trip.targetDate);
+        const dateStr = !isNaN(targetD.getTime()) 
+          ? targetD.toLocaleDateString('sv-SE', { year: 'numeric', month: 'short', day: 'numeric' })
+          : '';
+
+        const li = document.createElement('li');
+        li.className = `p-3 rounded-2xl border transition-all flex items-center justify-between gap-2 cursor-pointer ${
+          isActive 
+            ? 'bg-cyan-50/80 border-cyan-400 shadow-sm' 
+            : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+        }`;
+
+        li.innerHTML = `
+          <div class="flex items-center gap-2.5 flex-1 min-w-0" onclick="selectTrip(${trip.id})">
+            <span class="text-xl shrink-0">${themes[trip.theme]?.emojis[0] || '🌴'}</span>
+            <div class="min-w-0">
+              <h4 class="text-xs font-bold text-slate-900 truncate">${escapeHtml(trip.destination)}</h4>
+              <p class="text-[10px] text-slate-500">${dateStr}</p>
+            </div>
+            ${isActive ? '<span class="ml-auto text-[9px] font-bold bg-cyan-700 text-white px-2 py-0.5 rounded-full shrink-0">Aktiv</span>' : ''}
+          </div>
+          ${store.trips.length > 1 ? `
+            <button onclick="deleteTrip(${trip.id}, event)" title="Ta bort resa" class="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 transition shrink-0">
+              <span class="material-symbols-rounded text-base">delete</span>
+            </button>
+          ` : ''}
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    function selectTrip(id) {
+      if (store.activeTripId === id) {
+        closeModal('modal-trips');
+        return;
+      }
+      store.activeTripId = id;
+      appData = getActiveTrip();
+      hasCelebratedStart = sessionStorage.getItem('vacation_celebrated_' + appData.id) === 'true';
+      saveState();
+      applyTheme(appData.theme || 'tropical');
+      renderAll();
+      updateCountdown();
+      fetchDestinationWeather(true);
+      closeModal('modal-trips');
+      showToast(`Bytte resa till ${appData.destination}`);
+    }
+
+    function addNewTripPrompt() {
+      const title = prompt('Ange resmål / destination (t.ex. Rom, Italien):');
+      if (!title || !title.trim()) return;
+
+      const newTrip = createEmptyTrip(title.trim(), 60, 'city');
+      store.trips.push(newTrip);
+      store.activeTripId = newTrip.id;
+      appData = newTrip;
+      hasCelebratedStart = false;
+
+      saveState();
+      applyTheme(appData.theme);
+      renderAll();
+      updateCountdown();
+      fetchDestinationWeather(true);
+      closeModal('modal-trips');
+      openModal('modal-edit');
+      showToast(`Resan "${title.trim()}" skapad! Justera datum vid behov.`);
+    }
+
+    function deleteTrip(id, event) {
+      if (event) event.stopPropagation();
+      if (store.trips.length <= 1) {
+        alert('Du måste ha minst en resa sparad.');
+        return;
+      }
+
+      const tripToDelete = store.trips.find(t => t.id === id);
+      const name = tripToDelete ? tripToDelete.destination : 'resan';
+
+      if (confirm(`Är du säker på att du vill ta bort "${name}"?`)) {
+        store.trips = store.trips.filter(t => t.id !== id);
+        if (store.activeTripId === id) {
+          store.activeTripId = store.trips[0].id;
+        }
+        appData = getActiveTrip();
+        hasCelebratedStart = sessionStorage.getItem('vacation_celebrated_' + appData.id) === 'true';
+        saveState();
+        applyTheme(appData.theme);
+        renderAll();
+        updateCountdown();
+        fetchDestinationWeather();
+        renderTripsList();
+        showToast(`Tog bort "${name}".`);
+      }
+    }
+
     // --- SÄKERHETSKOPIA FILHANTERING ---
     function exportFullBackup() {
       try {
@@ -1626,7 +1729,6 @@
       }
       emptyEl.classList.add('hidden');
 
-      // Säker sortering som inte kraschar på ogiltiga datum
       const sorted = [...appData.timeline].sort((a, b) => {
         const timeA = new Date(`${a.date || '1970-01-01'}T${a.time || '00:00'}`).getTime() || 0;
         const timeB = new Date(`${b.date || '1970-01-01'}T${b.time || '00:00'}`).getTime() || 0;
