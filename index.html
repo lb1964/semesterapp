@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Semester Nedräkning</title>
+  <title>Semesterklockan</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Material Symbols & Fonts -->
@@ -81,10 +81,10 @@
     }
 
     .glass-card {
-      background: rgba(255, 255, 255, 0.72);
+      background: rgba(255, 255, 255, 0.76);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.45);
     }
 
     .glass-card-dark {
@@ -154,14 +154,14 @@
       <!-- App Top Bar -->
       <div class="px-5 pt-4 pb-2.5 flex items-center justify-between z-20">
         <div class="flex items-center gap-2 text-white">
-          <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-sm">
+          <button onclick="switchTab('home')" title="Till startsidan" class="w-10 h-10 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center shadow-sm transition">
             <span id="theme-header-icon" class="material-symbols-rounded text-2xl text-amber-300">flight_takeoff</span>
-          </div>
+          </button>
           <!-- Klickbar reseväljare -->
           <button onclick="openModal('modal-trips')" class="text-left flex items-center gap-1 group">
             <div>
-              <span class="text-[10px] font-semibold tracking-wider uppercase text-white/70 block">Aktiv resa ▾</span>
-              <h1 id="topbar-title" class="text-base font-bold text-white tracking-tight leading-none truncate max-w-[130px] sm:max-w-[160px] group-active:opacity-80">Resa</h1>
+              <span class="text-[10px] font-semibold tracking-wider uppercase text-white/75 block">Aktiv resa ▾</span>
+              <h1 id="topbar-title" class="text-base font-bold text-white tracking-tight leading-none truncate max-w-[140px] sm:max-w-[170px] group-active:opacity-80">Resa</h1>
             </div>
           </button>
         </div>
@@ -186,8 +186,109 @@
       <!-- Scrollable Tab Content Area -->
       <div class="flex-1 overflow-y-auto px-4 pb-20 pt-1 space-y-4 z-10" id="scroll-content">
         
+        <!-- Tab 0: HOME / OVERVIEW VIEW (STARTSIDA) -->
+        <section id="view-home" class="tab-view space-y-4">
+          <!-- Välkomst-header -->
+          <div class="px-1 flex justify-between items-end text-white">
+            <div>
+              <p id="home-greeting" class="text-xs font-medium text-white/80">Välkommen tillbaka</p>
+              <h2 class="text-2xl font-black font-display tracking-tight">Mina resor</h2>
+            </div>
+            <button onclick="addNewTripPrompt()" class="px-3.5 py-2 rounded-2xl bg-white text-cyan-900 font-bold text-xs shadow-md hover:bg-cyan-50 active:scale-95 transition flex items-center gap-1.5">
+              <span class="material-symbols-rounded text-base text-cyan-700">add_circle</span> Ny resa
+            </button>
+          </div>
+
+          <!-- Nästa resa i fokus (Hero-kort) -->
+          <div id="home-hero-card" class="rounded-[30px] p-5 text-white shadow-xl relative overflow-hidden bg-tropical border border-white/25 transition-all">
+            <div class="absolute inset-0 bg-black/15 pointer-events-none"></div>
+            <div class="relative z-10">
+              <div class="flex justify-between items-center mb-3">
+                <span id="home-hero-tag" class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md">
+                  Nästa äventyr
+                </span>
+                <span id="home-hero-emoji" class="text-2xl">🌴</span>
+              </div>
+
+              <h3 id="home-hero-dest" class="text-2xl font-black font-display tracking-tight leading-tight">Mallorca, Spanien</h3>
+              <p id="home-hero-date" class="text-xs text-white/85 mt-1 flex items-center gap-1">
+                <span class="material-symbols-rounded text-sm">event</span>
+                <span>Lördag 15 juli 2026</span>
+              </p>
+
+              <div class="mt-4 flex items-center justify-between bg-black/20 backdrop-blur-md rounded-2xl p-3 border border-white/15">
+                <div>
+                  <span id="home-hero-days" class="text-2xl font-black font-display leading-none">--</span>
+                  <span id="home-hero-days-label" class="text-[11px] text-white/85 ml-1 font-medium">dagar kvar</span>
+                </div>
+                <button id="home-hero-open-btn" onclick="switchTab('countdown')" class="px-3.5 py-2 rounded-xl bg-white text-slate-900 font-bold text-xs shadow-sm hover:bg-slate-100 active:scale-95 transition flex items-center gap-1">
+                  Öppna <span class="material-symbols-rounded text-sm">arrow_forward</span>
+                </button>
+              </div>
+
+              <!-- Snabb packstatus i hero-kortet -->
+              <div class="mt-3">
+                <div class="flex justify-between text-[10px] font-semibold text-white/85 mb-1">
+                  <span>Packstatus</span>
+                  <span id="home-hero-pack-text">0%</span>
+                </div>
+                <div class="w-full bg-white/25 rounded-full h-1.5 overflow-hidden">
+                  <div id="home-hero-pack-bar" class="bg-white h-full rounded-full transition-all duration-500 w-0"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lista över kommande & pågående resor -->
+          <div class="glass-card rounded-[28px] p-4 text-slate-800 shadow-xl space-y-3">
+            <div class="flex justify-between items-center">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Kommande & aktiva resor</h3>
+              <span id="home-upcoming-count" class="text-[11px] font-bold text-cyan-800 bg-cyan-100/80 px-2 py-0.5 rounded-full">1 st</span>
+            </div>
+
+            <ul id="home-upcoming-list" class="space-y-2.5"></ul>
+
+            <!-- Streckat kort för att lägga till fler -->
+            <button onclick="addNewTripPrompt()" class="w-full py-3 rounded-2xl border-2 border-dashed border-slate-300/90 hover:border-cyan-600 hover:bg-cyan-50/50 text-slate-500 hover:text-cyan-800 text-xs font-bold flex items-center justify-center gap-1.5 transition">
+              <span class="material-symbols-rounded text-base">add</span> Planera ytterligare en resa
+            </button>
+          </div>
+
+          <!-- Arkiv för avslutade resor (visas om det finns passerade resor) -->
+          <div id="home-archive-section" class="hidden glass-card rounded-[28px] p-4 text-slate-800 shadow-lg space-y-2.5">
+            <button onclick="toggleArchiveList()" class="w-full flex justify-between items-center text-left">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-rounded text-base text-slate-500">inventory_2</span>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Tidigare resor (<span id="home-archive-count">0</span>)</h3>
+              </div>
+              <span id="home-archive-chevron" class="material-symbols-rounded text-slate-400 transition-transform">expand_more</span>
+            </button>
+            <ul id="home-archive-list" class="hidden space-y-2 pt-1"></ul>
+          </div>
+
+          <!-- Snabbverktyg för delning & backup på startsidan -->
+          <div class="glass-card rounded-[28px] p-4 text-slate-800 shadow-lg space-y-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Delning & Säkerhetskopia</h3>
+            <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
+              <button onclick="openQrModal()" class="py-2.5 px-3 bg-cyan-50 hover:bg-cyan-100 text-cyan-900 border border-cyan-200 rounded-2xl flex items-center justify-center gap-1.5 transition">
+                <span class="material-symbols-rounded text-base text-cyan-700">qr_code_2</span> Dela via QR
+              </button>
+              <button onclick="importSingleTripFromClipboard()" class="py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl flex items-center justify-center gap-1.5 transition">
+                <span class="material-symbols-rounded text-base text-cyan-700">content_paste</span> Klistra in resa
+              </button>
+              <button onclick="exportFullBackup()" class="py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl flex items-center justify-center gap-1.5 transition">
+                <span class="material-symbols-rounded text-base text-cyan-700">file_download</span> Backup (JSON)
+              </button>
+              <label class="py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-2xl flex items-center justify-center gap-1.5 transition cursor-pointer">
+                <span class="material-symbols-rounded text-base text-cyan-700">file_upload</span> Återställ
+                <input type="file" accept=".json" class="hidden" onchange="importFullBackup(this)">
+              </label>
+            </div>
+          </div>
+        </section>
+
         <!-- Tab 1: COUNTDOWN VIEW -->
-        <section id="view-countdown" class="tab-view space-y-4">
+        <section id="view-countdown" class="tab-view hidden space-y-4">
           <!-- Hero Destination Card -->
           <div class="glass-card rounded-[32px] p-5 text-slate-800 shadow-xl transition-all">
             <div class="flex justify-between items-start mb-2">
@@ -391,16 +492,16 @@
 
             <!-- Add Item Form med snabbtagg -->
             <form id="form-add-item" class="flex gap-2 mb-3">
-              <input type="text" id="input-new-item" required placeholder="Lägg till sak (t.ex. Pass, Solglasögon)..." class="flex-1 px-3.5 py-2.5 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-800 shadow-sm">
+              <input type="text" id="input-new-item" required placeholder="Lägg till sak (t.ex. Pass, Solglasögon)..." class="flex-1 min-w-0 px-3.5 py-2.5 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 text-slate-800 shadow-sm">
               
-              <select id="input-item-category" class="text-xs font-semibold bg-white border border-slate-200 rounded-2xl px-2.5 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-600 shadow-sm">
+              <select id="input-item-category" class="text-xs font-semibold bg-white border border-slate-200 rounded-2xl px-2.5 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-600 shadow-sm shrink-0">
                 <option value="carryon">Handbagage</option>
                 <option value="luggage">Resväska</option>
                 <option value="morning">Sista morgonen</option>
                 <option value="other">Övrigt</option>
               </select>
 
-              <button type="submit" class="bg-cyan-700 active:bg-cyan-800 text-white px-3.5 py-2 rounded-2xl text-xs font-bold flex items-center justify-center shadow-md transition active:scale-95">
+              <button type="submit" class="bg-cyan-700 active:bg-cyan-800 text-white px-3.5 py-2 rounded-2xl text-xs font-bold flex items-center justify-center shadow-md transition active:scale-95 shrink-0">
                 <span class="material-symbols-rounded text-base">add</span>
               </button>
             </form>
@@ -506,7 +607,7 @@
                   <span id="timeline-count" class="text-[10px] text-slate-400">0 inbokade</span>
                 </div>
 
-                <!-- Formulär för ny aktivitet -->
+                <!-- Formulär för ny aktivitet (Mobilanpassad layout utan överflöd) -->
                 <form id="form-add-activity" class="space-y-2 pt-1 border-t border-slate-100">
                   <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -597,7 +698,7 @@
                       <option value="TRY">TRY (₺)</option>
                       <option value="PLN">PLN (zł)</option>
                     </select>
-                    <input type="number" id="fx-input-foreign" placeholder="0" oninput="convertFromForeign()" class="w-full text-xs font-bold bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                    <input type="number" id="fx-input-foreign" placeholder="0" oninput="convertFromForeign()" class="w-full min-w-0 text-xs font-bold bg-slate-50 p-1.5 rounded-xl border border-slate-200">
                   </div>
                 </div>
 
@@ -616,12 +717,12 @@
             <form id="form-add-expense" class="flex flex-col gap-2">
               <input type="text" id="input-expense-name" required placeholder="T.ex. Middag, Taxi..." class="w-full px-3 py-2 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-600 text-slate-800 shadow-sm">
               <div class="flex gap-2">
-                <select id="input-expense-currency" class="text-xs font-bold bg-white px-2.5 py-2 rounded-2xl border border-slate-200 text-slate-700 shadow-sm">
+                <select id="input-expense-currency" class="text-xs font-bold bg-white px-2.5 py-2 rounded-2xl border border-slate-200 text-slate-700 shadow-sm shrink-0">
                   <option value="SEK">SEK (kr)</option>
                   <option value="FOREIGN">Vald valuta</option>
                 </select>
-                <input type="number" step="any" id="input-expense-amount" required placeholder="Belopp" class="flex-1 px-3 py-2 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-600 text-slate-800 shadow-sm">
-                <button type="submit" class="bg-cyan-700 active:bg-cyan-800 text-white px-4 py-2 rounded-2xl text-xs font-bold shadow-md flex items-center justify-center">
+                <input type="number" step="any" id="input-expense-amount" required placeholder="Belopp" class="flex-1 min-w-0 px-3 py-2 text-xs bg-white rounded-2xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-600 text-slate-800 shadow-sm">
+                <button type="submit" class="bg-cyan-700 active:bg-cyan-800 text-white px-4 py-2 rounded-2xl text-xs font-bold shadow-md flex items-center justify-center shrink-0">
                   <span class="material-symbols-rounded text-base">add</span>
                 </button>
               </div>
@@ -639,31 +740,38 @@
         </section>
       </div>
 
-      <!-- Android Material 3 Bottom Navigation Bar -->
-      <nav class="absolute bottom-0 left-0 right-0 h-16 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200/50 flex justify-around items-center px-4 z-30 shadow-lg">
-        <button onclick="switchTab('countdown')" id="nav-btn-countdown" class="nav-btn flex flex-col items-center justify-center text-cyan-800 flex-1 py-1 transition group">
-          <div class="nav-indicator w-12 h-7 rounded-full bg-cyan-100 flex items-center justify-center transition-all group-active:scale-95">
-            <span class="material-symbols-rounded text-xl text-cyan-900">timer</span>
+      <!-- Android Material 3 Bottom Navigation Bar (5 flikar) -->
+      <nav class="absolute bottom-0 left-0 right-0 h-16 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/50 flex justify-around items-center px-2 z-30 shadow-lg">
+        <button onclick="switchTab('home')" id="nav-btn-home" class="nav-btn flex flex-col items-center justify-center text-cyan-800 flex-1 py-1 transition group">
+          <div class="nav-indicator w-11 h-7 rounded-full bg-cyan-100 flex items-center justify-center transition-all group-active:scale-95">
+            <span class="material-symbols-rounded text-xl text-cyan-900">explore</span>
           </div>
-          <span class="text-[10px] font-bold mt-0.5">Nedräkning</span>
+          <span class="text-[10px] font-bold mt-0.5">Översikt</span>
+        </button>
+
+        <button onclick="switchTab('countdown')" id="nav-btn-countdown" class="nav-btn flex flex-col items-center justify-center text-slate-500 flex-1 py-1 transition group">
+          <div class="nav-indicator w-11 h-7 rounded-full flex items-center justify-center transition-all group-active:scale-95">
+            <span class="material-symbols-rounded text-xl">timer</span>
+          </div>
+          <span class="text-[10px] font-medium mt-0.5">Nedräkning</span>
         </button>
 
         <button onclick="switchTab('checklist')" id="nav-btn-checklist" class="nav-btn flex flex-col items-center justify-center text-slate-500 flex-1 py-1 transition group">
-          <div class="nav-indicator w-12 h-7 rounded-full flex items-center justify-center transition-all group-active:scale-95">
+          <div class="nav-indicator w-11 h-7 rounded-full flex items-center justify-center transition-all group-active:scale-95">
             <span class="material-symbols-rounded text-xl">checklist</span>
           </div>
           <span class="text-[10px] font-medium mt-0.5">Packlista</span>
         </button>
 
         <button onclick="switchTab('notes')" id="nav-btn-notes" class="nav-btn flex flex-col items-center justify-center text-slate-500 flex-1 py-1 transition group">
-          <div class="nav-indicator w-12 h-7 rounded-full flex items-center justify-center transition-all group-active:scale-95">
+          <div class="nav-indicator w-11 h-7 rounded-full flex items-center justify-center transition-all group-active:scale-95">
             <span class="material-symbols-rounded text-xl">travel_explore</span>
           </div>
           <span class="text-[10px] font-medium mt-0.5">Reseinfo</span>
         </button>
 
         <button onclick="switchTab('budget')" id="nav-btn-budget" class="nav-btn flex flex-col items-center justify-center text-slate-500 flex-1 py-1 transition group">
-          <div class="nav-indicator w-10 h-7 rounded-full flex items-center justify-center transition-all group-active:scale-95">
+          <div class="nav-indicator w-11 h-7 rounded-full flex items-center justify-center transition-all group-active:scale-95">
             <span class="material-symbols-rounded text-xl">payments</span>
           </div>
           <span class="text-[10px] font-medium mt-0.5">Budget</span>
@@ -979,6 +1087,7 @@
     let deferredInstallPrompt = null;
     let qrCodeInstance = null;
     let hasCelebratedStart = false;
+    let archiveExpanded = false;
 
     function createEmptyTrip(title = 'Mallorca, Spanien', daysAhead = 45, theme = 'tropical') {
       const d = new Date();
@@ -1143,6 +1252,189 @@
       morning: { name: 'Sista morgonen', color: 'text-amber-800 bg-amber-100/70 border-amber-200' },
       other: { name: 'Övrigt', color: 'text-slate-700 bg-slate-100 border-slate-200' }
     };
+
+    // --- STARTSIDA / ÖVERSIKTSVY ---
+    function updateGreeting() {
+      const hour = new Date().getHours();
+      let greet = 'God kväll!';
+      if (hour < 10) greet = 'God morgon!';
+      else if (hour < 17) greet = 'Hej!';
+      const el = document.getElementById('home-greeting');
+      if (el) el.textContent = `${greet} Dags att planera nästa äventyr`;
+    }
+
+    function toggleArchiveList() {
+      archiveExpanded = !archiveExpanded;
+      const list = document.getElementById('home-archive-list');
+      const chev = document.getElementById('home-archive-chevron');
+      if (list) list.classList.toggle('hidden', !archiveExpanded);
+      if (chev) chev.style.transform = archiveExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+
+    function renderHomeView() {
+      updateGreeting();
+      const now = Date.now();
+
+      // Sortera resor kronologiskt efter startdatum
+      const sortedTrips = [...store.trips].sort((a, b) => new Date(a.targetDate) - new Date(b.targetDate));
+      const upcoming = [];
+      const archived = [];
+
+      sortedTrips.forEach(trip => {
+        const startMs = new Date(trip.targetDate).getTime();
+        const endMs = trip.endDate ? new Date(trip.endDate).getTime() : startMs + 7 * 86400000;
+        if (now >= endMs) archived.push(trip);
+        else upcoming.push(trip);
+      });
+
+      // Välj huvudresa till Hero-kortet (närmaste kommande/pågående, annars aktiv resa)
+      const heroTrip = upcoming.length > 0 ? upcoming[0] : appData;
+      const heroTheme = themes[heroTrip.theme] || themes.tropical;
+      const heroCard = document.getElementById('home-hero-card');
+      if (heroCard) {
+        heroCard.className = `rounded-[30px] p-5 text-white shadow-xl relative overflow-hidden border border-white/25 transition-all ${heroTheme.bgClass}`;
+      }
+
+      const heroStart = new Date(heroTrip.targetDate).getTime();
+      const heroEnd = heroTrip.endDate ? new Date(heroTrip.endDate).getTime() : heroStart + 7 * 86400000;
+      const isOngoing = now >= heroStart && now < heroEnd;
+      const isPast = now >= heroEnd;
+
+      document.getElementById('home-hero-tag').textContent = isOngoing ? 'Pågår just nu! 🎉' : (isPast ? 'Senaste resan' : 'Nästa resa');
+      document.getElementById('home-hero-emoji').textContent = heroTheme.emojis[0] || '🌴';
+      document.getElementById('home-hero-dest').textContent = heroTrip.destination;
+
+      const dObj = new Date(heroTrip.targetDate);
+      const dStr = !isNaN(dObj.getTime())
+        ? dObj.toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+        : '';
+      document.getElementById('home-hero-date').innerHTML = `<span class="material-symbols-rounded text-sm">event</span><span>${dStr.charAt(0).toUpperCase() + dStr.slice(1)}</span>`;
+
+      if (isOngoing) {
+        const daysLeft = Math.max(0, Math.ceil((heroEnd - now) / 86400000));
+        document.getElementById('home-hero-days').textContent = daysLeft;
+        document.getElementById('home-hero-days-label').textContent = 'dagar kvar av semestern';
+      } else if (isPast) {
+        document.getElementById('home-hero-days').textContent = '0';
+        document.getElementById('home-hero-days-label').textContent = 'dagar kvar (avslutad)';
+      } else {
+        const daysToGo = Math.max(0, Math.ceil((heroStart - now) / 86400000));
+        document.getElementById('home-hero-days').textContent = daysToGo;
+        document.getElementById('home-hero-days-label').textContent = daysToGo === 1 ? 'dag kvar till avresa' : 'dagar kvar till avresa';
+      }
+
+      const heroTotalPack = (heroTrip.checklist || []).length;
+      const heroPacked = (heroTrip.checklist || []).filter(i => i.packed).length;
+      const heroPackPct = heroTotalPack > 0 ? Math.round((heroPacked / heroTotalPack) * 100) : 0;
+      document.getElementById('home-hero-pack-text').textContent = `${heroPacked}/${heroTotalPack} (${heroPackPct}%)`;
+      document.getElementById('home-hero-pack-bar').style.width = `${heroPackPct}%`;
+
+      const openBtn = document.getElementById('home-hero-open-btn');
+      if (openBtn) {
+        openBtn.onclick = () => {
+          selectTrip(heroTrip.id, false);
+          switchTab('countdown');
+        };
+      }
+
+      // Rendera kommande resor-listan
+      const upcomingListEl = document.getElementById('home-upcoming-list');
+      const upcomingCountEl = document.getElementById('home-upcoming-count');
+      upcomingCountEl.textContent = `${upcoming.length} st`;
+      upcomingListEl.innerHTML = '';
+
+      if (upcoming.length === 0) {
+        upcomingListEl.innerHTML = '<li class="text-center py-3 text-xs text-slate-400">Inga kommande resor inlagda.</li>';
+      } else {
+        upcoming.forEach(trip => {
+          const isSelected = trip.id === store.activeTripId;
+          const tMeta = themes[trip.theme] || themes.tropical;
+          const tStart = new Date(trip.targetDate).getTime();
+          const tEnd = trip.endDate ? new Date(trip.endDate).getTime() : tStart + 7 * 86400000;
+          const ongoing = now >= tStart && now < tEnd;
+          const daysDiff = Math.max(0, Math.ceil((tStart - now) / 86400000));
+
+          const pTotal = (trip.checklist || []).length;
+          const pDone = (trip.checklist || []).filter(i => i.packed).length;
+          const pPct = pTotal > 0 ? Math.round((pDone / pTotal) * 100) : 0;
+
+          const dateLabel = new Date(trip.targetDate).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' });
+
+          const li = document.createElement('li');
+          li.className = `p-3 rounded-2xl border transition-all flex items-center justify-between gap-2.5 cursor-pointer ${
+            isSelected ? 'bg-cyan-50/90 border-cyan-400 shadow-sm' : 'bg-white/90 border-slate-200/80 hover:bg-white'
+          }`;
+
+          li.innerHTML = `
+            <div class="flex items-center gap-3 flex-1 min-w-0" onclick="openTripFromHome(${trip.id})">
+              <div class="w-10 h-10 rounded-2xl ${tMeta.bgClass} text-white flex items-center justify-center text-lg shrink-0 shadow-sm">
+                ${tMeta.emojis[0] || '🌴'}
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-1.5">
+                  <h4 class="text-xs font-bold text-slate-900 truncate">${escapeHtml(trip.destination)}</h4>
+                  ${isSelected ? '<span class="w-2 h-2 rounded-full bg-cyan-600 shrink-0" title="Aktiv resa"></span>' : ''}
+                </div>
+                <p class="text-[10px] text-slate-500 mt-0.5">${dateLabel} • Packat ${pPct}%</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span onclick="openTripFromHome(${trip.id})" class="px-2.5 py-1 rounded-xl text-[10px] font-bold ${
+                ongoing ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'
+              }">
+                ${ongoing ? 'Pågår' : `${daysDiff} d`}
+              </span>
+              ${store.trips.length > 1 ? `
+                <button onclick="deleteTrip(${trip.id}, event)" title="Ta bort resa" class="text-slate-400 hover:text-rose-500 p-1 rounded-lg hover:bg-rose-50 transition">
+                  <span class="material-symbols-rounded text-base">delete</span>
+                </button>
+              ` : ''}
+            </div>
+          `;
+          upcomingListEl.appendChild(li);
+        });
+      }
+
+      // Rendera arkiverade (avslutade) resor
+      const archiveSec = document.getElementById('home-archive-section');
+      const archiveListEl = document.getElementById('home-archive-list');
+      const archiveCountEl = document.getElementById('home-archive-count');
+
+      if (archived.length > 0) {
+        archiveSec.classList.remove('hidden');
+        archiveCountEl.textContent = archived.length;
+        archiveListEl.innerHTML = '';
+
+        archived.forEach(trip => {
+          const tMeta = themes[trip.theme] || themes.tropical;
+          const dateLabel = new Date(trip.targetDate).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' });
+          const li = document.createElement('li');
+          li.className = 'p-2.5 rounded-2xl bg-slate-50/90 border border-slate-200/80 flex items-center justify-between gap-2 cursor-pointer opacity-80 hover:opacity-100 transition';
+          li.innerHTML = `
+            <div class="flex items-center gap-2.5 flex-1 min-w-0" onclick="openTripFromHome(${trip.id})">
+              <span class="text-lg">${tMeta.emojis[0] || '🌴'}</span>
+              <div class="min-w-0">
+                <h4 class="text-xs font-bold text-slate-700 truncate">${escapeHtml(trip.destination)}</h4>
+                <p class="text-[10px] text-slate-400">${dateLabel} • Avslutad</p>
+              </div>
+            </div>
+            ${store.trips.length > 1 ? `
+              <button onclick="deleteTrip(${trip.id}, event)" title="Ta bort resa" class="text-slate-400 hover:text-rose-500 p-1 rounded-lg hover:bg-rose-50 transition shrink-0">
+                <span class="material-symbols-rounded text-base">delete</span>
+              </button>
+            ` : ''}
+          `;
+          archiveListEl.appendChild(li);
+        });
+      } else {
+        archiveSec.classList.add('hidden');
+      }
+    }
+
+    function openTripFromHome(id) {
+      selectTrip(id, false);
+      switchTab('countdown');
+    }
 
     // --- VÄDERFUNKTIONER (Open-Meteo) ---
     function getWeatherMeta(code) {
@@ -1425,6 +1717,7 @@
               renderAll();
               updateCountdown();
               fetchDestinationWeather();
+              switchTab('countdown');
               showToast(`Resan till ${dest} har importerats! 🎉`);
 
               window.history.replaceState({}, document.title, window.location.pathname);
@@ -1436,7 +1729,7 @@
       }
     }
 
-    // --- RESEHANTERING & LISTNING (Mina resor) ---
+    // --- RESEHANTERING & LISTNING ---
     function renderTripsList() {
       const listEl = document.getElementById('trips-list');
       if (!listEl) return;
@@ -1457,7 +1750,7 @@
         }`;
 
         li.innerHTML = `
-          <div class="flex items-center gap-2.5 flex-1 min-w-0" onclick="selectTrip(${trip.id})">
+          <div class="flex items-center gap-2.5 flex-1 min-w-0" onclick="selectTrip(${trip.id}, true)">
             <span class="text-xl shrink-0">${themes[trip.theme]?.emojis[0] || '🌴'}</span>
             <div class="min-w-0">
               <h4 class="text-xs font-bold text-slate-900 truncate">${escapeHtml(trip.destination)}</h4>
@@ -1475,9 +1768,9 @@
       });
     }
 
-    function selectTrip(id) {
+    function selectTrip(id, closeTripsModal = true) {
       if (store.activeTripId === id) {
-        closeModal('modal-trips');
+        if (closeTripsModal) closeModal('modal-trips');
         return;
       }
       store.activeTripId = id;
@@ -1488,8 +1781,8 @@
       renderAll();
       updateCountdown();
       fetchDestinationWeather(true);
-      closeModal('modal-trips');
-      showToast(`Bytte resa till ${appData.destination}`);
+      if (closeTripsModal) closeModal('modal-trips');
+      showToast(`Valde resa: ${appData.destination}`);
     }
 
     function addNewTripPrompt() {
@@ -1534,7 +1827,6 @@
         renderAll();
         updateCountdown();
         fetchDestinationWeather();
-        renderTripsList();
         showToast(`Tog bort "${name}".`);
       }
     }
@@ -1959,10 +2251,11 @@
       renderBudget();
       renderTripsList();
       renderTimeline();
+      renderHomeView();
 
       // Förifyll dagsplanens datumväljare med resans startdatum
       const actDateEl = document.getElementById('input-act-date');
-      if (actDateEl && !actDateEl.value && appData.targetDate) {
+      if (actDateEl && appData.targetDate) {
         actDateEl.value = appData.targetDate.split('T')[0];
       }
     }
@@ -2130,6 +2423,12 @@
         filtered = appData.checklist.filter(i => (i.category || 'other') === activeFilter);
       }
 
+      if (filtered.length === 0) {
+        emptyEl.classList.remove('hidden');
+      } else {
+        emptyEl.classList.add('hidden');
+      }
+
       filtered.forEach(item => {
         const catMeta = packCategories[item.category] || packCategories.other;
 
@@ -2166,6 +2465,7 @@
       });
 
       updatePackingProgress();
+      renderHomeView();
     }
 
     function toggleItemPacked(id) {
@@ -2321,6 +2621,7 @@
       appData.theme = themeKey;
       saveState();
       applyTheme(themeKey);
+      renderHomeView();
       closeModal('modal-theme');
       showToast(`Tema ändrat till ${themes[themeKey].name}!`);
     }
@@ -2373,10 +2674,11 @@
 
     // --- NAVIGATION TABS ---
     function switchTab(tabId) {
-      const views = ['countdown', 'checklist', 'notes', 'budget'];
+      const views = ['home', 'countdown', 'checklist', 'notes', 'budget'];
       views.forEach(v => {
         const section = document.getElementById(`view-${v}`);
         const btn = document.getElementById(`nav-btn-${v}`);
+        if (!section || !btn) return;
         const indicator = btn.querySelector('.nav-indicator');
 
         if (v === tabId) {
@@ -2393,6 +2695,7 @@
           indicator.classList.remove('bg-cyan-100');
         }
       });
+      if (tabId === 'home') renderHomeView();
       document.getElementById('scroll-content').scrollTop = 0;
     }
 
@@ -2626,7 +2929,6 @@
 
       applyTheme(appData.theme);
       renderAll();
-      renderTripsList();
       updateCurrencyRates();
       fetchLiveExchangeRates();
       setupEventListeners();
@@ -2634,8 +2936,10 @@
       fetchDestinationWeather();
 
       const hash = window.location.hash.replace('#', '');
-      if (['checklist', 'budget', 'notes'].includes(hash)) {
+      if (['home', 'countdown', 'checklist', 'budget', 'notes'].includes(hash)) {
         switchTab(hash);
+      } else {
+        switchTab('home');
       }
     }
 
